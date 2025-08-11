@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // 실제 MCP 서버 경로
-const mainPath = join(__dirname, '../src/mcp-server.js');
+const mainPath = join(__dirname, '../src/index.js');
 
 /**
  * SOLAPI MCP 서버 프로세스 생성

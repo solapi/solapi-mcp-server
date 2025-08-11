@@ -6,6 +6,9 @@ import os from 'os';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 
+// TODO 테스트버전. 후에 키와 같이 환경변수로 관리
+const mcpVersion = "solapi-mcp-server-test"
+
 // ES6 모듈에서 __dirname 대체
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -134,8 +137,8 @@ function setupClaudeConfig () {
     const serverName = packageJson.name.replace(/[@\/]/g, '-');
 
     config.mcpServers[serverName] = {
-      command: 'solapi-mcp-server',
-      args: [],
+      command: 'npx',
+      args: ["-y", mcpVersion],
       env: {},
     };
 
@@ -207,8 +210,8 @@ function setupCursorConfig () {
     const serverName = packageJson.name.replace(/[@\/]/g, '-');
 
     config.mcpServers[serverName] = {
-      command: 'solapi-mcp-server',
-      args: [],
+      command: 'npx',
+      args: ["-y", mcpVersion],
       env: {},
     };
 
