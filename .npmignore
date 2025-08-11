@@ -1,0 +1,27 @@
+# Development files
+.git/
+.idea/
+.vscode/
+node_modules/
+.env
+.env.local
+
+# Test files
+test/
+*.test.js
+*.spec.js
+
+# Build artifacts
+*.log
+logs/
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Only include what's needed for distribution
+!src/
+!bin/
+!README.md
+!package.json

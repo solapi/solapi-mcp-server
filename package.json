@@ -1,0 +1,46 @@
+{
+  "name": "@nurigo/mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for SOLAPI SMS/Alimtalk document search and integration",
+  "author": "max",
+  "license": "MIT",
+  "type": "module",
+  "keywords": [
+    "mcp",
+    "claude",
+    "cursor",
+    "solapi",
+    "sms",
+    "alimtalk",
+    "document-search"
+  ],
+  "main": "src/mcp-server.js",
+  "bin": {
+    "solapi-mcp-server": "./bin/mcp-runner.js"
+  },
+  "files": [
+    "src/**/*",
+    "bin/**/*",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "node src/mcp-server.js",
+    "dev": "node --watch src/mcp-server.js",
+    "test": "node test/test-server.js",
+    "test-fixed": "node test/test-fixed.js",
+    "postinstall": "node bin/postinstall.js",
+    "prepublishOnly": "chmod +x bin/* && echo '✅ 실행 권한 설정 완료'"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "unified": "^11.0.5",
+    "remark-parse": "^11.0.0",
+    "unist-util-visit": "^5.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}
