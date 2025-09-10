@@ -4,6 +4,7 @@
  */
 import { NodejsExamplesLibrary } from '../data/nodejsExamples.js';
 import { JavaExamplesLibrary } from '../data/javaExamples.js';
+import { PythonExamplesLibrary } from '../data/pythonExamples.js';
 import type { ToolDefinition, ExampleSearchArgs, ExampleDetailArgs, ToolResult } from '../types';
 
 export const localSearchTool: ToolDefinition = {
@@ -14,7 +15,7 @@ export const localSearchTool: ToolDefinition = {
     properties: {
       query: {
         type: 'string',
-        description: '검색할 키워드 (예: SMS, 알림톡, TypeScript, 에러처리, Java, Kotlin)'
+        description: '검색할 키워드 (예: SMS, 알림톡, TypeScript, 에러처리, Java, Kotlin, Python)'
       },
       category: {
         type: 'string',
@@ -44,6 +45,7 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
       if (/\b(ts|typescript)\b/.test(q)) return 'ts';
       if (/\b(nodejs|node|js|javascript)\b/.test(q)) return 'js';
       if (/\b(java|kotlin)\b/.test(q)) return 'java';
+      if (/\b(python|py)\b/.test(q)) return 'python';
       return null;
     })();
 
@@ -56,40 +58,54 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
       (example.id && example.id.toLowerCase().includes('java')) ||
       (example.id && example.id.toLowerCase().includes('kotlin'));
 
-    // 언어별 라이브러리 선택
-    let library = NodejsExamplesLibrary;
-    if (languageIntent === 'java' || /\b(java|kotlin)\b/.test(q)) {
-      library = JavaExamplesLibrary;
-    }
+    const isPythonExample = (example: any): boolean =>
+      (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('python'))) ||
+      (example.id && example.id.toLowerCase().includes('python'));
 
-    // 카테고리 필터가 있는 경우
+    // 언어별 라이브러리 선택 및 전체 검색 결과 준비
+    let allResults: any[] = [];
+    
     if (category) {
-      const categoryExamples = library.getExamplesByCategory(category);
-      results = categoryExamples.filter((example: any) => 
+      // 카테고리 필터가 있는 경우 모든 라이브러리에서 검색
+      const nodeExamples = NodejsExamplesLibrary.getExamplesByCategory(category);
+      const javaExamples = JavaExamplesLibrary.getExamplesByCategory(category);
+      const pythonExamples = PythonExamplesLibrary.getExamplesByCategory(category);
+      
+      allResults = [...nodeExamples, ...javaExamples, ...pythonExamples].filter((example: any) => 
         example.title.toLowerCase().includes(query.toLowerCase()) ||
         example.description.toLowerCase().includes(query.toLowerCase()) ||
         example.keywords.some((k: string) => k.toLowerCase().includes(query.toLowerCase())) ||
         example.code.toLowerCase().includes(query.toLowerCase())
       );
     } else {
-      // 전체 검색
-      results = library.searchExamples(query);
+      // 전체 검색 - 모든 라이브러리에서 검색 후 합침
+      const nodeResults = NodejsExamplesLibrary.searchExamples(query);
+      const javaResults = JavaExamplesLibrary.searchExamples(query);
+      const pythonResults = PythonExamplesLibrary.searchExamples(query);
+      
+      allResults = [...nodeResults, ...javaResults, ...pythonResults];
     }
+
 
     // 언어 의도에 따른 필터 적용
     if (languageIntent === 'ts') {
-      results = results.filter(isTsExample);
+      results = allResults.filter(isTsExample);
     } else if (languageIntent === 'js') {
-      results = results.filter((ex: any) => !isTsExample(ex) && !isJavaExample(ex));
+      results = allResults.filter((ex: any) => !isTsExample(ex) && !isJavaExample(ex) && !isPythonExample(ex));
     } else if (languageIntent === 'java') {
-      results = results.filter(isJavaExample);
+      results = allResults.filter(isJavaExample);
+    } else if (languageIntent === 'python') {
+      results = allResults.filter(isPythonExample);
+    } else {
+      // 언어 필터 없이 모든 결과 사용 (점수순 정렬)
+      results = allResults.sort((a: any, b: any) => (b.score || 0) - (a.score || 0));
     }
 
     // 결과 제한
     results = results.slice(0, limit);
 
     if (results.length === 0) {
-      const allCategories = [...NodejsExamplesLibrary.getCategories(), ...JavaExamplesLibrary.getCategories()];
+      const allCategories = [...NodejsExamplesLibrary.getCategories(), ...JavaExamplesLibrary.getCategories(), ...PythonExamplesLibrary.getCategories()];
       const uniqueCategories = [...new Set(allCategories)];
       
       return {
@@ -103,13 +119,16 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
     // 결과 포맷팅
     const formattedResults = results.map((example: any) => {
       let language = 'js';
-      if (isTsExample(example)) language = 'ts';
-      else if (isJavaExample(example)) {
+      if (isTsExample(example)) {
+        language = 'typescript';
+      } else if (isJavaExample(example)) {
         if (example.keywords.some((k: string) => k.toLowerCase().includes('kotlin'))) {
           language = 'kotlin';
         } else {
           language = 'java';
         }
+      } else if (isPythonExample(example)) {
+        language = 'python';
       }
 
       return {
@@ -127,7 +146,7 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
     });
 
     const languageFilterText = languageIntent ? 
-      ` (언어 필터: ${languageIntent === 'ts' ? 'TypeScript' : languageIntent === 'java' ? 'Java/Kotlin' : 'JavaScript/Node.js'})` : '';
+      ` (언어 필터: ${languageIntent === 'ts' ? 'TypeScript' : languageIntent === 'java' ? 'Java/Kotlin' : languageIntent === 'python' ? 'Python' : 'JavaScript/Node.js'})` : '';
 
     return {
       content: [{
@@ -185,15 +204,25 @@ export async function handleExampleDetail(args: Record<string, unknown>): Promis
           language = 'java';
         }
       }
-    } else {
-      // TypeScript 예제인지 확인
+    }
+    
+    // Java 예제에서도 찾지 못한 경우 Python 예제에서 찾기
+    if (!example) {
+      example = PythonExamplesLibrary.getExampleById(id);
+      if (example) {
+        language = 'python';
+      }
+    }
+    
+    // TypeScript 예제인지 확인 (Node.js 예제 중)
+    if (example && !language.includes('java') && language !== 'python') {
       if (example.category && example.category.toLowerCase() === 'typescript') {
         language = 'typescript';
       }
     }
     
     if (!example) {
-      const allExamples = [...NodejsExamplesLibrary.getExamples(), ...JavaExamplesLibrary.getExamples()];
+      const allExamples = [...NodejsExamplesLibrary.getExamples(), ...JavaExamplesLibrary.getExamples(), ...PythonExamplesLibrary.getExamples()];
       return {
         content: [{
           type: 'text',
