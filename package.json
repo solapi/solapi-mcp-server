@@ -29,7 +29,7 @@
     "dev:watch": "nodemon --exec ts-node --esm src/index.ts",
     "test": "node test/test-server.js",
     "test-fixed": "node test/test-fixed.js",
-    "postinstall": "node dist/bin/postinstall.js",
+    "postinstall": "test -f dist/bin/postinstall.js && node dist/bin/postinstall.js || echo 'Skipping postinstall in CI/build environment'",
     "prepublishOnly": "npm run build && chmod +x dist/bin/* && echo '빌드 및 실행 권한 설정 완료'"
   },
   "engines": {
