@@ -137,7 +137,7 @@ async function formatSearchResults(results: any[], query: string, limit: number)
     // 로컬 검색 결과가 없으면 웹 검색 시도
     if (webSearchTool) {
       try {
-        console.log(`로컬 검색 결과 없음. 웹 검색 시도: "${query}"`);
+        console.warn(`로컬 검색 결과 없음. 웹 검색 시도: "${query}"`);
         const webResult = await webSearchTool.execute({ query, limit });
         
         // 웹 검색 결과가 있으면 반환
