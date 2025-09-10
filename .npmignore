@@ -1,27 +1,25 @@
-# Development files
-.git/
-.idea/
+# TypeScript 빌드 정보 파일
+*.tsbuildinfo
+
+# 소스 파일 (npm 패키지에는 빌드된 파일만 포함)
+src/
+bin/
+tsconfig.json
+
+# 개발 도구
 .vscode/
-node_modules/
-.env
-.env.local
+.idea/
+*.swp
+*.swo
 
-# Test files
-test/
-*.test.js
-*.spec.js
-
-# Build artifacts
-*.log
+# 로그
 logs/
-coverage/
+*.log
 
-# OS files
-.DS_Store
-Thumbs.db
+# 임시 파일
+tmp/
+temp/
 
-# Only include what's needed for distribution
-!src/
-!bin/
-!README.md
-!package.json
+.env
+.npmrc
+.gitignore

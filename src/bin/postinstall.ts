@@ -6,8 +6,19 @@ import os from 'os';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 
-// TODO 테스트버전. 후에 키와 같이 환경변수로 관리
-const mcpVersion = "solapi-mcp-server-test"
+interface PackageInfo {
+  name: string;
+  version: string;
+  description: string;
+}
+
+interface McpConfig {
+  mcpServers: Record<string, {
+    command: string;
+    args: string[];
+    env?: Record<string, string>;
+  }>;
+}
 
 // ES6 모듈에서 __dirname 대체
 const __filename = fileURLToPath(import.meta.url);
@@ -21,7 +32,7 @@ console.log('🚀 Setting up SOLAPI MCP server...');
 /**
  * 클로드 MCP 설정 경로를 반환하는 함수
  */
-function getClaudeConfigPath () {
+function getClaudeConfigPath(): string {
   if (process.platform === 'win32') {
     return path.join(process.env.APPDATA || '', 'Claude', 'claude_desktop_config.json');
   } else {
@@ -32,7 +43,7 @@ function getClaudeConfigPath () {
 /**
  * 커서 MCP 설정 가능한 경로들을 반환하는 함수
  */
-function getCursorConfigPaths () {
+function getCursorConfigPaths(): string[] {
   const homeDir = os.homedir();
   const possiblePaths = [];
 
@@ -63,7 +74,7 @@ function getCursorConfigPaths () {
 /**
  * 실제 존재하는 Cursor 설정 파일 경로를 찾는 함수
  */
-function findCursorConfigPath () {
+function findCursorConfigPath(): string | null {
   const possiblePaths = getCursorConfigPaths();
 
   // 기존 설정 파일이 있는 경로 찾기
@@ -102,7 +113,7 @@ function findCursorConfigPath () {
  * - true: 설정 파일 업데이트 성공
  * - false: Claude Desktop 미설치 또는 설정 실패
  */
-function setupClaudeConfig () {
+function setupClaudeConfig(): boolean {
   try {
     const configPath = getClaudeConfigPath();
     const configDir = path.dirname(configPath);
@@ -115,7 +126,7 @@ function setupClaudeConfig () {
 
     console.log(`📍 Claude config path: ${configPath}`);
 
-    let config = { mcpServers: {} };
+    let config: McpConfig = { mcpServers: {} };
 
     // 기존 설정 파일이 있는 경우에만 읽기
     if (fs.existsSync(configPath)) {
@@ -133,12 +144,11 @@ function setupClaudeConfig () {
       return false;
     }
 
-    const packageJson = require('../package.json');
-    const serverName = packageJson.name.replace(/[@\/]/g, '-');
+    const serverName = 'solapi';
 
     config.mcpServers[serverName] = {
       command: 'npx',
-      args: ["-y", mcpVersion],
+      args: ["-y", "@solapi/mcp-server"],
       env: {},
     };
 
@@ -149,7 +159,7 @@ function setupClaudeConfig () {
     return true;
 
   } catch (error) {
-    console.log('❌ Failed to configure Claude:', error.message);
+    console.log('❌ Failed to configure Claude:', (error as Error).message);
     return false;
   }
 }
@@ -170,9 +180,14 @@ function setupClaudeConfig () {
  * - true: 설정 파일 업데이트 성공
  * - false: Cursor 미설치 또는 설정 실패
  */
-function setupCursorConfig () {
+function setupCursorConfig(): boolean {
   try {
     const configPath = findCursorConfigPath();
+
+    if (!configPath) {
+      console.log('ℹ️  Cursor not found, skipping Cursor configuration');
+      return false;
+    }
 
     // Cursor 설치 확인 (상위 디렉토리들 체크)
     const cursorBaseDir = process.platform === 'win32'
@@ -188,7 +203,7 @@ function setupCursorConfig () {
 
     console.log(`📍 Cursor config path: ${configPath}`);
 
-    let config = { mcpServers: {} };
+    let config: McpConfig = { mcpServers: {} };
 
     // 기존 설정 파일이 있는 경우에만 읽기
     if (fs.existsSync(configPath)) {
@@ -206,12 +221,12 @@ function setupCursorConfig () {
       return false;
     }
 
-    const packageJson = require('../package.json');
+    const packageJson: PackageInfo = require('../../package.json');
     const serverName = packageJson.name.replace(/[@\/]/g, '-');
 
     config.mcpServers[serverName] = {
       command: 'npx',
-      args: ["-y", mcpVersion],
+      args: ["-y", "@solapi/mcp-server"],
       env: {},
     };
 
@@ -222,7 +237,7 @@ function setupCursorConfig () {
     return true;
 
   } catch (error) {
-    console.log('❌ Failed to configure Cursor:', error.message);
+    console.log('❌ Failed to configure Cursor:', (error as Error).message);
     return false;
   }
 }
@@ -230,8 +245,8 @@ function setupCursorConfig () {
 /**
  * 수동 설정 안내를 출력하는 함수
  */
-function showManualInstructions () {
-  const packageJson = require('../package.json');
+function showManualInstructions(): void {
+  const packageJson: PackageInfo = require('../../package.json');
   const serverName = packageJson.name.replace(/[@\/]/g, '-');
 
   console.log('\n📖 Manual setup instructions:');
@@ -261,7 +276,7 @@ function showManualInstructions () {
 /**
  * 메인 실행 함수
  */
-function main () {
+function main(): void {
   const claudeSuccess = setupClaudeConfig();
   const cursorSuccess = setupCursorConfig();
 

@@ -9,11 +9,18 @@ import { CacheManager } from './cache.js';
 import { OptimizedSearchEngine } from '../search/searchEngine.js';
 import { DocumentDataManager } from '../search/documentData.js';
 import { ToolManager } from '../tools/toolManager.js';
+import type { ServerConfig } from '../types';
 
 /**
  * @class 성능 최적화된 SOLAPI MCP 서버
  */
 export class OptimizedSolapiMcpServer {
+  private server: Server;
+  private searchEngine: OptimizedSearchEngine;
+  private cache: CacheManager;
+  private toolManager: ToolManager;
+  private isInitialized: boolean = false;
+
   constructor() {
     this.server = new Server(
       {
@@ -30,7 +37,6 @@ export class OptimizedSolapiMcpServer {
     this.searchEngine = new OptimizedSearchEngine();
     this.cache = new CacheManager();
     this.toolManager = new ToolManager(this.searchEngine, this.cache);
-    this.isInitialized = false;
 
     this.setupRequestHandlers();
   }
@@ -38,7 +44,7 @@ export class OptimizedSolapiMcpServer {
   /**
    * 요청 핸들러 설정
    */
-  setupRequestHandlers() {
+  private setupRequestHandlers(): void {
     // 도구 목록 반환
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
@@ -48,16 +54,17 @@ export class OptimizedSolapiMcpServer {
 
     // 도구 실행
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
+      const { name, arguments: args = {} } = request.params;
       await this.initialize();
-      return await this.toolManager.executeTool(name, args);
+      const result = await this.toolManager.executeTool(name, args);
+      return result as any;
     });
   }
 
   /**
    * 서비스 초기화를 수행하는 지연 로딩 메서드
    */
-  async initialize() {
+  private async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
     const startTime = Date.now();
@@ -81,7 +88,7 @@ export class OptimizedSolapiMcpServer {
   /**
    * MCP 서버 시작
    */
-  async start() {
+  async start(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     console.error('🚀 Optimized SOLAPI MCP server started');
