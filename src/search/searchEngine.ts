@@ -1,20 +1,27 @@
+import type { DocumentData, SearchResult, ISearchEngine } from '../types/index.js';
+
 /**
  * @class 검색 엔진
  * @description TF-IDF 알고리즘과 역 인덱스를 사용한 고성능 검색
  */
-export class OptimizedSearchEngine {
+export class OptimizedSearchEngine implements ISearchEngine {
+  private documents: DocumentData[] = [];
+  private invertedIndex: Map<string, Set<number>> = new Map(); // 인덱스 맵핑: 키워드 -> 문서
+  private tfidfScores: Map<number, Map<string, number>> = new Map(); // TF-IDF 점수 캐싱
+  private isIndexed: boolean = false;
+
   constructor() {
     this.documents = [];
-    this.invertedIndex = new Map(); // 인덱스 맵핑: 키워드 -> 문서
-    this.tfidfScores = new Map(); // TF-IDF 점수 캐싱
+    this.invertedIndex = new Map();
+    this.tfidfScores = new Map();
     this.isIndexed = false;
   }
 
   /**
    * 문서 추가 및 인덱싱
-   * @param {Array} docs - 문서 배열
+   * @param docs - 문서 배열
    */
-  addDocuments(docs) {
+  addDocuments(docs: DocumentData[]): void {
     this.documents = docs;
     this.buildInvertedIndex();
     this.calculateTFIDF();
@@ -24,18 +31,18 @@ export class OptimizedSearchEngine {
   /**
    * 역 인덱스 구축 - O(n*m) 시간 복잡도
    */
-  buildInvertedIndex() {
+  private buildInvertedIndex(): void {
     this.invertedIndex.clear();
 
     this.documents.forEach((doc, docIndex) => {
-      const allText = `${doc.title} ${doc.content} ${doc.keywords.join(' ')}`.toLowerCase();
+      const allText = `${doc.title} ${doc.content} ${doc.tags?.join(' ') || ''}`.toLowerCase();
       const terms = this.tokenize(allText);
 
       terms.forEach(term => {
         if (!this.invertedIndex.has(term)) {
           this.invertedIndex.set(term, new Set());
         }
-        this.invertedIndex.get(term).add(docIndex);
+        this.invertedIndex.get(term)!.add(docIndex);
       });
     });
   }
@@ -43,21 +50,21 @@ export class OptimizedSearchEngine {
   /**
    * TF-IDF 점수 계산
    */
-  calculateTFIDF() {
+  private calculateTFIDF(): void {
     this.tfidfScores.clear();
     const docCount = this.documents.length;
 
     this.documents.forEach((doc, docIndex) => {
-      const allText = `${doc.title} ${doc.content} ${doc.keywords.join(' ')}`.toLowerCase();
+      const allText = `${doc.title} ${doc.content} ${doc.tags?.join(' ') || ''}`.toLowerCase();
       const terms = this.tokenize(allText);
-      const termFreq = new Map();
+      const termFreq = new Map<string, number>();
 
       // TF 계산
       terms.forEach(term => {
         termFreq.set(term, (termFreq.get(term) || 0) + 1);
       });
 
-      const docScores = new Map();
+      const docScores = new Map<string, number>();
 
       // TF-IDF 계산
       termFreq.forEach((tf, term) => {
@@ -73,10 +80,10 @@ export class OptimizedSearchEngine {
 
   /**
    * 텍스트 토큰화
-   * @param {string} text
-   * @returns {Array<string>}
+   * @param text - 토큰화할 텍스트
+   * @returns 토큰 배열
    */
-  tokenize(text) {
+  private tokenize(text: string): string[] {
     return text
       .toLowerCase()
       .replace(/[^\w\s가-힣]/g, ' ')
@@ -86,11 +93,11 @@ export class OptimizedSearchEngine {
 
   /**
    * 고급 검색 수행
-   * @param {string} query - 검색 쿼리
-   * @param {number} limit - 결과 제한 (기본값: 5)
-   * @returns {Array} 정렬된 검색 결과
+   * @param query - 검색 쿼리
+   * @param limit - 결과 제한 (기본값: 5)
+   * @returns 정렬된 검색 결과
    */
-  search(query, limit = 5) {
+  search(query: string, limit: number = 5): SearchResult[] {
     if (!this.isIndexed) {
       return [];
     }
@@ -100,7 +107,7 @@ export class OptimizedSearchEngine {
       return [];
     }
 
-    const docScores = new Map();
+    const docScores = new Map<number, number>();
 
     // 각 쿼리 용어에 대해 일치하는 문서 찾기
     queryTerms.forEach(term => {
@@ -113,9 +120,9 @@ export class OptimizedSearchEngine {
           let weight = 1;
           const doc = this.documents[docIndex];
 
-          if (doc.title.toLowerCase().includes(term)) {
+          if (doc && doc.title.toLowerCase().includes(term)) {
             weight = 2;
-          } else if (doc.keywords.some(keyword => keyword.toLowerCase().includes(term))) {
+          } else if (doc && doc.tags?.some(tag => tag.toLowerCase().includes(term))) {
             weight = 1.5;
           }
 
@@ -142,9 +149,42 @@ export class OptimizedSearchEngine {
     return Array.from(docScores.entries())
       .sort((a, b) => b[1] - a[1]) // 점수순 내림차순
       .slice(0, limit)
-      .map(([docIndex, score]) => ({
-        ...this.documents[docIndex],
-        relevanceScore: score.toFixed(3)
-      }));
+      .map(([docIndex, score]) => {
+        const doc = this.documents[docIndex];
+        if (!doc) {
+          throw new Error(`Document at index ${docIndex} not found`);
+        }
+        return {
+          id: doc.id,
+          title: doc.title,
+          content: doc.content,
+          url: doc.url,
+          score: parseFloat(score.toFixed(3)),
+          snippet: this.generateSnippet(doc.content, query),
+          metadata: doc.metadata
+        };
+      });
+  }
+
+  /**
+   * 검색 결과 스니펫 생성
+   * @param content - 문서 내용
+   * @param query - 검색 쿼리
+   * @returns 스니펫 문자열
+   */
+  private generateSnippet(content: string, query: string): string {
+    const queryLower = query.toLowerCase();
+    const contentLower = content.toLowerCase();
+    const index = contentLower.indexOf(queryLower);
+    
+    if (index === -1) {
+      return content.substring(0, 200) + '...';
+    }
+    
+    const start = Math.max(0, index - 100);
+    const end = Math.min(content.length, index + query.length + 100);
+    const snippet = content.substring(start, end);
+    
+    return (start > 0 ? '...' : '') + snippet + (end < content.length ? '...' : '');
   }
 }

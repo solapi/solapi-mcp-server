@@ -1,8 +1,8 @@
 {
-  "name": "@nurigo/mcp-server",
-  "version": "1.0.0",
-  "description": "MCP server for SOLAPI SMS/Alimtalk document search and integration",
-  "author": "max",
+  "name": "@solapi/mcp-server",
+  "version": "0.0.4",
+  "description": "MCP server for SOLAPI document search and integration",
+  "author": "solapi",
   "license": "MIT",
   "type": "module",
   "keywords": [
@@ -14,33 +14,38 @@
     "alimtalk",
     "document-search"
   ],
-  "main": "src/mcp-server.js",
+  "main": "dist/index.js",
   "bin": {
-    "solapi-mcp-server": "./bin/mcp-runner.js"
+    "solapi-mcp-server": "./dist/bin/mcp-runner.js"
   },
   "files": [
-    "src/**/*",
-    "bin/**/*",
+    "dist/**/*",
     "README.md"
   ],
   "scripts": {
-    "start": "node src/mcp-server.js",
-    "dev": "node --watch src/mcp-server.js",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node --esm src/index.ts",
+    "dev:watch": "nodemon --exec ts-node --esm src/index.ts",
     "test": "node test/test-server.js",
     "test-fixed": "node test/test-fixed.js",
-    "postinstall": "node bin/postinstall.js",
-    "prepublishOnly": "chmod +x bin/* && echo '✅ 실행 권한 설정 완료'"
+    "postinstall": "node dist/bin/postinstall.js",
+    "prepublishOnly": "npm run build && chmod +x dist/bin/* && echo '빌드 및 실행 권한 설정 완료'"
   },
   "engines": {
     "node": ">=16.0.0"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "unified": "^11.0.5",
     "remark-parse": "^11.0.0",
+    "unified": "^11.0.5",
     "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.0"
-  }
+    "@types/node": "^20.10.0",
+    "nodemon": "^3.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.3.0"
+  },
+  "packageManager": "yarn@4.9.2"
 }

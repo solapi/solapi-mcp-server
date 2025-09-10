@@ -1,7 +1,11 @@
 import { SearchResultFormatter } from '../search/formatter.js';
+import type { ISearchEngine, ICacheManager, Tool, ToolResult, SearchArgs } from '../types/index.js';
 
-export class SearchTool {
-  constructor(searchEngine, cache) {
+export class SearchTool implements Tool {
+  private searchEngine: ISearchEngine;
+  private cache: ICacheManager;
+
+  constructor(searchEngine: ISearchEngine, cache: ICacheManager) {
     this.searchEngine = searchEngine;
     this.cache = cache;
   }
@@ -35,11 +39,11 @@ export class SearchTool {
 
   /**
    * 검색 실행
-   * @param {Object} args - 도구 인수
-   * @returns {Promise<Object>} 검색 결과
+   * @param args - 도구 인수
+   * @returns 검색 결과
    */
-  async execute(args) {
-    const { query, limit = 5 } = args;
+  async execute(args: Record<string, unknown>): Promise<ToolResult> {
+    const { query, limit = 5 } = args as unknown as SearchArgs;
 
     try {
       if (!query?.trim()) {
@@ -52,7 +56,7 @@ export class SearchTool {
       }
 
       const cacheKey = `search:${query}:${limit}`;
-      let results = this.cache.get(cacheKey);
+      let results = this.cache.get(cacheKey) as any[];
 
       if (!results) {
         const searchStart = Date.now();
@@ -86,8 +90,9 @@ export class SearchTool {
       return {
         content: [{
           type: 'text',
-          text: `검색 중 오류가 발생했습니다: ${error.message}`
-        }]
+          text: `검색 중 오류가 발생했습니다: ${(error as Error).message}`
+        }],
+        isError: true
       };
     }
   }
