@@ -1,14 +1,14 @@
 /**
- * @file SOLAPI 예제 코드 검색 도구
- * @description 실제 사용 가능한 코드 스니펫을 빠르게 검색
+ * @file SOLAPI 로컬 검색 도구
+ * @description 로컬에 저장된 예제 코드 및 문서를 빠르게 검색
  */
 import { NodejsExamplesLibrary } from '../data/nodejsExamples.js';
 import { JavaExamplesLibrary } from '../data/javaExamples.js';
 import type { ToolDefinition, ExampleSearchArgs, ExampleDetailArgs, ToolResult } from '../types';
 
-export const exampleSearchTool: ToolDefinition = {
-  name: 'search-solapi-examples',
-  description: 'SOLAPI Node.js SDK의 실제 예제 코드를 검색합니다. 코드 스니펫, 사용법, 카테고리별 검색이 가능합니다.',
+export const localSearchTool: ToolDefinition = {
+  name: 'search-solapi-local',
+  description: '로컬에 저장된 SOLAPI 예제 코드와 문서를 검색합니다. 기본적으로 사용할 주요 검색 도구입니다. 코드 스니펫, 사용법, 카테고리별 검색이 가능합니다.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -33,7 +33,7 @@ export const exampleSearchTool: ToolDefinition = {
   }
 };
 
-export async function handleExampleSearch(args: Record<string, unknown>): Promise<ToolResult> {
+export async function handleLocalSearch(args: Record<string, unknown>): Promise<ToolResult> {
   const { query, category, limit = 5 } = args as unknown as ExampleSearchArgs;
   try {
     let results: any[] = [];
@@ -153,8 +153,8 @@ export async function handleExampleSearch(args: Record<string, unknown>): Promis
  * 예제 코드 상세 조회
  */
 export const exampleDetailTool: ToolDefinition = {
-  name: 'get-solapi-example-detail',
-  description: '특정 예제 코드의 상세 정보를 조회합니다.',
+  name: 'get-solapi-local-detail',
+  description: '특정 로컬 예제 코드의 상세 정보를 조회합니다.',
   inputSchema: {
     type: 'object',
     properties: {
