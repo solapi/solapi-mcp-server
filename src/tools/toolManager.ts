@@ -1,6 +1,6 @@
 import { WebSearchTool } from './webSearchTool.js';
 import { OverviewTool } from './overviewTool.js';
-import { localSearchTool, handleLocalSearch, exampleDetailTool, handleExampleDetail } from './localSearchTool.js';
+import { localSearchTool, handleLocalSearch, exampleDetailTool, handleExampleDetail, setWebSearchTool } from './localSearchTool.js';
 import { performanceTool, handlePerformanceTest, memoryAnalysisTool, handleMemoryAnalysis } from './performanceTool.js';
 import type { ISearchEngine, ICacheManager, ToolDefinition, ToolExecutor } from '../types';
 
@@ -20,6 +20,9 @@ export class ToolManager {
    */
   private initializeTools(searchEngine: ISearchEngine, cache: ICacheManager): void {
     const overviewTool = new OverviewTool(cache);
+
+    // 웹 검색 도구를 로컬 검색 도구에 설정
+    setWebSearchTool(searchEngine, cache);
 
     // 로컬 검색 도구 (최우선 기본 도구)
     this.tools.set('search-local-examples', {

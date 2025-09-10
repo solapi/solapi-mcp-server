@@ -10,7 +10,8 @@ import { AspExamplesLibrary } from '../data/aspExamples.js';
 import { ExampleCache } from '../core/exampleCache.js';
 import { WeightedSearchEngine } from '../search/weightedSearchEngine.js';
 import { SearchIndexManager } from '../search/searchIndexManager.js';
-import type { ToolDefinition, ExampleSearchArgs, ExampleDetailArgs, ToolResult } from '../types';
+import { WebSearchTool } from './webSearchTool.js';
+import type { ToolDefinition, ExampleSearchArgs, ExampleDetailArgs, ToolResult, ISearchEngine, ICacheManager } from '../types';
 
 export const localSearchTool: ToolDefinition = {
   name: 'search-local-examples',
@@ -44,6 +45,16 @@ const cache = ExampleCache.getInstance();
 
 // 인덱스 매니저 인스턴스
 const indexManager = SearchIndexManager.getInstance();
+
+// 웹 검색 도구 인스턴스 (의존성 주입을 위해 나중에 설정)
+let webSearchTool: WebSearchTool | null = null;
+
+/**
+ * 웹 검색 도구를 설정합니다.
+ */
+export function setWebSearchTool(searchEngine: ISearchEngine, cacheManager: ICacheManager): void {
+  webSearchTool = new WebSearchTool(searchEngine, cacheManager);
+}
 
 // 언어 감지 함수들
 const isTsExample = (example: any): boolean =>
@@ -119,10 +130,31 @@ function initializeCache(): void {
 }
 
 /**
- * 검색 결과를 포맷팅하여 반환합니다.
+ * 검색 결과를 포맷팅하여 반환합니다. 결과가 없으면 웹 검색을 시도합니다.
  */
-function formatSearchResults(results: any[], query: string, limit: number): ToolResult {
+async function formatSearchResults(results: any[], query: string, limit: number): Promise<ToolResult> {
   if (results.length === 0) {
+    // 로컬 검색 결과가 없으면 웹 검색 시도
+    if (webSearchTool) {
+      try {
+        console.log(`로컬 검색 결과 없음. 웹 검색 시도: "${query}"`);
+        const webResult = await webSearchTool.execute({ query, limit });
+        
+        // 웹 검색 결과가 있으면 반환
+        if (webResult.content && webResult.content.length > 0 && webResult.content[0]) {
+          return {
+            content: [{
+              type: 'text',
+              text: `Web search results for "${query}":\n\n${webResult.content[0].text}`
+            }]
+          };
+        }
+      } catch (error) {
+        console.error('웹 검색 실패:', error);
+      }
+    }
+
+    // 웹 검색도 실패하거나 웹 검색 도구가 없는 경우 기본 메시지 반환
     const allCategories = [
       ...NodejsExamplesLibrary.getCategories(),
       ...JavaExamplesLibrary.getCategories(),
@@ -135,7 +167,7 @@ function formatSearchResults(results: any[], query: string, limit: number): Tool
     return {
       content: [{
         type: 'text',
-        text: `"${query}"에 대한 예제 코드를 찾을 수 없습니다.\n\n제안사항:\n- SMS, LMS, 알림톡 등의 메시지 타입으로 검색해보세요\n- Node.js, JavaScript, TypeScript, Java, Kotlin, Python 등의 언어로 검색해보세요\n- 에러처리, 웹훅, 상태조회 등의 기능으로 검색해보세요\n- 사용 가능한 카테고리: ${uniqueCategories.join(', ')}`
+        text: `No examples found for "${query}".\n\nSuggestions:\n- Try searching by message types: SMS, LMS, 알림톡\n- Try searching by languages: Node.js, JavaScript, TypeScript, Java, Kotlin, Python\n- Try searching by features: error handling, webhook, status check\n- Available categories: ${uniqueCategories.join(', ')}`
       }]
     };
   }
@@ -178,8 +210,8 @@ function formatSearchResults(results: any[], query: string, limit: number): Tool
   return {
     content: [{
       type: 'text',
-      text: `"${query}"에 대한 ${results.length}개의 예제 코드를 찾았습니다.\n\n${formattedResults.map((result: any) => 
-        `## ${result.title}\n**카테고리**: ${result.category}\n**언어**: ${result.language}\n**사용법**: ${result.usage}\n\n**코드 미리보기**:\n\`\`\`${result.language}\n${result.codePreview}\n\`\`\`\n\n**전체 코드**:\n\`\`\`${result.language}\n${result.fullCode}\n\`\`\`\n\n**URL**: ${result.url}\n`
+      text: `Found ${results.length} examples for "${query}":\n\n${formattedResults.map((result: any) => 
+        `## ${result.title}\n**Category**: ${result.category}\n**Language**: ${result.language}\n**Usage**: ${result.usage}\n\n**Code Preview**:\n\`\`\`${result.language}\n${result.codePreview}\n\`\`\`\n\n**Full Code**:\n\`\`\`${result.language}\n${result.fullCode}\n\`\`\`\n\n**URL**: ${result.url}\n`
       ).join('\n---\n\n')}`
     }]
   };
@@ -197,7 +229,7 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
     const cacheKey = `${query}-${category || 'all'}-${limit}`;
     const cachedResults = cache.getSearchCache(cacheKey);
     if (cachedResults) {
-      return formatSearchResults(cachedResults, query, limit);
+      return await formatSearchResults(cachedResults, query, limit);
     }
 
     let results: any[] = [];
@@ -237,13 +269,13 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
     // 검색 결과를 캐시에 저장
     cache.setSearchCache(cacheKey, results);
 
-    return formatSearchResults(results, query, limit);
+    return await formatSearchResults(results, query, limit);
 
   } catch (error) {
     return {
       content: [{
         type: 'text',
-        text: `예제 코드 검색 중 오류가 발생했습니다: ${(error as Error).message}`
+        text: `Error occurred while searching examples: ${(error as Error).message}`
       }],
       isError: true
     };
@@ -330,7 +362,7 @@ export async function handleExampleDetail(args: Record<string, unknown>): Promis
       return {
         content: [{
           type: 'text',
-          text: `예제 ID "${id}"를 찾을 수 없습니다.\n\n사용 가능한 예제들:\n${allExamples.map((e: any) => 
+          text: `Example ID "${id}" not found.\n\nAvailable examples:\n${allExamples.map((e: any) => 
             `- **${e.id}**: ${e.title} (${e.category})`
           ).join('\n')}`
         }]
@@ -340,7 +372,7 @@ export async function handleExampleDetail(args: Record<string, unknown>): Promis
     return {
       content: [{
         type: 'text',
-        text: `## ${example.title}\n\n**설명**: ${example.description}\n**카테고리**: ${example.category}\n**사용법**: ${example.usage}\n\n**키워드**: ${example.keywords.join(', ')}\n\n**코드**:\n\`\`\`${language}\n${example.code}\n\`\`\`\n\n**URL**: ${example.url}`
+        text: `## ${example.title}\n\n**Description**: ${example.description}\n**Category**: ${example.category}\n**Usage**: ${example.usage}\n\n**Keywords**: ${example.keywords.join(', ')}\n\n**Code**:\n\`\`\`${language}\n${example.code}\n\`\`\`\n\n**URL**: ${example.url}`
       }]
     };
 
@@ -348,7 +380,7 @@ export async function handleExampleDetail(args: Record<string, unknown>): Promis
     return {
       content: [{
         type: 'text',
-        text: `예제 상세 조회 중 오류가 발생했습니다: ${(error as Error).message}`
+        text: `Error occurred while retrieving example details: ${(error as Error).message}`
       }],
       isError: true
     };

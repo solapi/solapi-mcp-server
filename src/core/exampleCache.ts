@@ -2,7 +2,7 @@
  * @file 예제 데이터 캐시 관리자
  * @description 예제 데이터를 메모리에 캐시하여 성능을 향상시킵니다.
  */
-import type { Example } from '../types/index.js';
+import type { Example } from '../types';
 
 export class ExampleCache {
   private static instance: ExampleCache;

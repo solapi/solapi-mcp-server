@@ -2,7 +2,7 @@
  * @file 검색 인덱스 관리자
  * @description 예제 데이터의 빠른 검색을 위한 인덱스를 생성하고 관리합니다.
  */
-import type { Example } from '../types/index.js';
+import type { Example } from '../types';
 
 export interface SearchIndex {
   keywordIndex: Map<string, Set<string>>;
