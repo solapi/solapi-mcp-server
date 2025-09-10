@@ -6,6 +6,7 @@ import { NodejsExamplesLibrary } from '../data/nodejsExamples.js';
 import { JavaExamplesLibrary } from '../data/javaExamples.js';
 import { PythonExamplesLibrary } from '../data/pythonExamples.js';
 import { GoExamplesLibrary } from '../data/goExamples.js';
+import { AspExamplesLibrary } from '../data/aspExamples.js';
 import type { ToolDefinition, ExampleSearchArgs, ExampleDetailArgs, ToolResult } from '../types';
 
 export const localSearchTool: ToolDefinition = {
@@ -16,7 +17,7 @@ export const localSearchTool: ToolDefinition = {
     properties: {
       query: {
         type: 'string',
-        description: '검색할 키워드 (예: SMS, 알림톡, TypeScript, 에러처리, Java, Kotlin, Python)'
+        description: '검색할 키워드 (예: SMS, 알림톡, TypeScript, Node.js, JavaScript, 에러처리, Java, Kotlin, Python)'
       },
       category: {
         type: 'string',
@@ -41,13 +42,14 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
     let results: any[] = [];
     const q = (query || '').toLowerCase();
 
-    // 언어 자동 추론
+    // 언어 자동 추론 - 더 정확한 패턴 매칭
     const languageIntent = (() => {
       if (/\b(ts|typescript)\b/.test(q)) return 'ts';
-      if (/\b(nodejs|node|js|javascript)\b/.test(q)) return 'js';
+      if (/\b(nodejs|node\.js|nodejs|javascript|js)\b/.test(q)) return 'js';
       if (/\b(java|kotlin)\b/.test(q)) return 'java';
       if (/\b(python|py)\b/.test(q)) return 'python';
       if (/\b(go|golang)\b/.test(q)) return 'go';
+      if (/\b(asp|vbscript|classic\s*asp)\b/.test(q)) return 'asp';
       return null;
     })();
 
@@ -55,10 +57,19 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
       (example.category && example.category.toLowerCase() === 'typescript') ||
       (example.id && example.id.toLowerCase().includes('typescript'));
 
-    const isJavaExample = (example: any): boolean =>
-      (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('java') || k.toLowerCase().includes('kotlin'))) ||
-      (example.id && example.id.toLowerCase().includes('java')) ||
-      (example.id && example.id.toLowerCase().includes('kotlin'));
+    const isJavaExample = (example: any): boolean => {
+      // JavaScript 예제는 Java 예제가 아님을 명확히 구분
+      if (example.keywords && example.keywords.some((k: string) => 
+        k.toLowerCase().includes('javascript') || 
+        k.toLowerCase().includes('nodejs') || 
+        k.toLowerCase().includes('js') ||
+        k.toLowerCase().includes('node'))) {
+        return false;
+      }
+      return (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('java') || k.toLowerCase().includes('kotlin'))) ||
+        (example.id && example.id.toLowerCase().includes('java')) ||
+        (example.id && example.id.toLowerCase().includes('kotlin'));
+    };
 
     const isPythonExample = (example: any): boolean =>
       (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('python'))) ||
@@ -67,6 +78,30 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
     const isGoExample = (example: any): boolean =>
       (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('go') || k.toLowerCase().includes('golang'))) ||
       (example.id && example.id.toLowerCase().includes('go'));
+
+    const isAspExample = (example: any): boolean =>
+      (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('asp') || k.toLowerCase().includes('vbscript'))) ||
+      (example.id && example.id.toLowerCase().includes('asp-'));
+
+    const isJsExample = (example: any): boolean => {
+      // TypeScript 예제는 JavaScript 예제가 아님
+      if (isTsExample(example)) return false;
+      
+      // Java 예제는 JavaScript 예제가 아님
+      if (isJavaExample(example)) return false;
+      
+      // Python, Go, ASP 예제는 JavaScript 예제가 아님
+      if (isPythonExample(example) || isGoExample(example) || isAspExample(example)) return false;
+      
+      // Node.js 예제는 JavaScript 예제임
+      return (example.keywords && example.keywords.some((k: string) => 
+        k.toLowerCase().includes('javascript') || 
+        k.toLowerCase().includes('nodejs') || 
+        k.toLowerCase().includes('js') ||
+        k.toLowerCase().includes('node'))) ||
+        (example.id && example.id.toLowerCase().includes('nodejs')) ||
+        (example.id && example.id.toLowerCase().includes('javascript'));
+    };
 
     // 언어별 라이브러리 선택 및 전체 검색 결과 준비
     let allResults: any[] = [];
@@ -77,8 +112,9 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
       const javaExamples = JavaExamplesLibrary.getExamplesByCategory(category);
       const pythonExamples = PythonExamplesLibrary.getExamplesByCategory(category);
       const goExamples = GoExamplesLibrary.getExamplesByCategory(category);
+      const aspExamples = AspExamplesLibrary.getExamplesByCategory(category);
       
-      allResults = [...nodeExamples, ...javaExamples, ...pythonExamples, ...goExamples].filter((example: any) => 
+      allResults = [...nodeExamples, ...javaExamples, ...pythonExamples, ...goExamples, ...aspExamples].filter((example: any) => 
         example.title.toLowerCase().includes((query as string).toLowerCase()) ||
         example.description.toLowerCase().includes((query as string).toLowerCase()) ||
         example.keywords.some((k: string) => k.toLowerCase().includes((query as string).toLowerCase())) ||
@@ -90,8 +126,9 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
       const javaResults = JavaExamplesLibrary.searchExamples(query as string);
       const pythonResults = PythonExamplesLibrary.searchExamples(query as string);
       const goResults = GoExamplesLibrary.searchExamples(query as string);
+      const aspResults = AspExamplesLibrary.searchExamples(query as string);
       
-      allResults = [...nodeResults, ...javaResults, ...pythonResults, ...goResults];
+      allResults = [...nodeResults, ...javaResults, ...pythonResults, ...goResults, ...aspResults];
     }
 
 
@@ -99,13 +136,15 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
     if (languageIntent === 'ts') {
       results = allResults.filter(isTsExample);
     } else if (languageIntent === 'js') {
-      results = allResults.filter((ex: any) => !isTsExample(ex) && !isJavaExample(ex) && !isPythonExample(ex) && !isGoExample(ex));
+      results = allResults.filter(isJsExample);
     } else if (languageIntent === 'java') {
       results = allResults.filter(isJavaExample);
     } else if (languageIntent === 'python') {
       results = allResults.filter(isPythonExample);
     } else if (languageIntent === 'go') {
       results = allResults.filter(isGoExample);
+    } else if (languageIntent === 'asp') {
+      results = allResults.filter(isAspExample);
     } else {
       // 언어 필터 없이 모든 결과 사용 (점수순 정렬)
       results = allResults.sort((a: any, b: any) => (b.score || 0) - (a.score || 0));
@@ -119,21 +158,22 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
         ...NodejsExamplesLibrary.getCategories(),
         ...JavaExamplesLibrary.getCategories(),
         ...PythonExamplesLibrary.getCategories(),
-        ...GoExamplesLibrary.getCategories()
+        ...GoExamplesLibrary.getCategories(),
+        ...AspExamplesLibrary.getCategories()
       ];
       const uniqueCategories = [...new Set(allCategories)];
       
       return {
         content: [{
           type: 'text',
-          text: `"${query}"에 대한 예제 코드를 찾을 수 없습니다.\n\n제안사항:\n- SMS, LMS, 알림톡 등의 메시지 타입으로 검색해보세요\n- Java, Kotlin, TypeScript, 에러처리, 웹훅 등의 기능으로 검색해보세요\n- 사용 가능한 카테고리: ${uniqueCategories.join(', ')}`
+          text: `"${query}"에 대한 예제 코드를 찾을 수 없습니다.\n\n제안사항:\n- SMS, LMS, 알림톡 등의 메시지 타입으로 검색해보세요\n- Node.js, JavaScript, TypeScript, Java, Kotlin, Python 등의 언어로 검색해보세요\n- 에러처리, 웹훅, 상태조회 등의 기능으로 검색해보세요\n- 사용 가능한 카테고리: ${uniqueCategories.join(', ')}`
         }]
       };
     }
 
     // 결과 포맷팅
     const formattedResults = results.map((example: any) => {
-      let language = 'js';
+      let language = 'javascript';
       if (isTsExample(example)) {
         language = 'typescript';
       } else if (isJavaExample(example)) {
@@ -146,6 +186,10 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
         language = 'python';
       } else if (isGoExample(example)) {
         language = 'go';
+      } else if (isAspExample(example)) {
+        language = 'vbscript';
+      } else if (isJsExample(example)) {
+        language = 'javascript';
       }
 
       return {
@@ -163,7 +207,7 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
     });
 
     const languageFilterText = languageIntent ? 
-      ` (언어 필터: ${languageIntent === 'ts' ? 'TypeScript' : languageIntent === 'java' ? 'Java/Kotlin' : languageIntent === 'python' ? 'Python' : languageIntent === 'go' ? 'Go' : 'JavaScript/Node.js'})` : '';
+      ` (언어 필터: ${languageIntent === 'ts' ? 'TypeScript' : languageIntent === 'js' ? 'JavaScript/Node.js' : languageIntent === 'java' ? 'Java/Kotlin' : languageIntent === 'python' ? 'Python' : languageIntent === 'go' ? 'Go' : languageIntent === 'asp' ? 'Classic ASP (VBScript)' : 'JavaScript/Node.js'})` : '';
 
     return {
       content: [{
@@ -238,9 +282,17 @@ export async function handleExampleDetail(args: Record<string, unknown>): Promis
         language = 'go';
       }
     }
+
+    // Go 예제에서도 찾지 못한 경우 ASP 예제에서 찾기
+    if (!example) {
+      example = AspExamplesLibrary.getExampleById(id);
+      if (example) {
+        language = 'vbscript';
+      }
+    }
     
     // TypeScript 예제인지 확인 (Node.js 예제 중)
-    if (example && !language.includes('java') && language !== 'python' && language !== 'go') {
+    if (example && !language.includes('java') && language !== 'python' && language !== 'go' && language !== 'vbscript') {
       if (example.category && example.category.toLowerCase() === 'typescript') {
         language = 'typescript';
       }
@@ -251,7 +303,8 @@ export async function handleExampleDetail(args: Record<string, unknown>): Promis
         ...NodejsExamplesLibrary.getExamples(),
         ...JavaExamplesLibrary.getExamples(),
         ...PythonExamplesLibrary.getExamples(),
-        ...GoExamplesLibrary.getExamples()
+        ...GoExamplesLibrary.getExamples(),
+        ...AspExamplesLibrary.getExamples()
       ];
       return {
         content: [{
