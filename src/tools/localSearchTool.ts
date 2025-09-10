@@ -7,6 +7,9 @@ import { JavaExamplesLibrary } from '../data/javaExamples.js';
 import { PythonExamplesLibrary } from '../data/pythonExamples.js';
 import { GoExamplesLibrary } from '../data/goExamples.js';
 import { AspExamplesLibrary } from '../data/aspExamples.js';
+import { ExampleCache } from '../core/exampleCache.js';
+import { WeightedSearchEngine } from '../search/weightedSearchEngine.js';
+import { SearchIndexManager } from '../search/searchIndexManager.js';
 import type { ToolDefinition, ExampleSearchArgs, ExampleDetailArgs, ToolResult } from '../types';
 
 export const localSearchTool: ToolDefinition = {
@@ -36,9 +39,173 @@ export const localSearchTool: ToolDefinition = {
   }
 };
 
+// 캐시 인스턴스
+const cache = ExampleCache.getInstance();
+
+// 인덱스 매니저 인스턴스
+const indexManager = SearchIndexManager.getInstance();
+
+// 언어 감지 함수들
+const isTsExample = (example: any): boolean =>
+  (example.category && example.category.toLowerCase() === 'typescript') ||
+  (example.id && example.id.toLowerCase().includes('typescript'));
+
+const isJavaExample = (example: any): boolean => {
+  // JavaScript 예제는 Java 예제가 아님을 명확히 구분
+  if (example.keywords && example.keywords.some((k: string) => 
+    k.toLowerCase().includes('javascript') || 
+    k.toLowerCase().includes('nodejs') || 
+    k.toLowerCase().includes('js') ||
+    k.toLowerCase().includes('node'))) {
+    return false;
+  }
+  return (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('java') || k.toLowerCase().includes('kotlin'))) ||
+    (example.id && example.id.toLowerCase().includes('java')) ||
+    (example.id && example.id.toLowerCase().includes('kotlin'));
+};
+
+const isPythonExample = (example: any): boolean =>
+  (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('python'))) ||
+  (example.id && example.id.toLowerCase().includes('python'));
+
+const isGoExample = (example: any): boolean =>
+  (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('go') || k.toLowerCase().includes('golang'))) ||
+  (example.id && example.id.toLowerCase().includes('go'));
+
+const isAspExample = (example: any): boolean =>
+  (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('asp') || k.toLowerCase().includes('vbscript'))) ||
+  (example.id && example.id.toLowerCase().includes('asp-'));
+
+const isJsExample = (example: any): boolean => {
+  // TypeScript 예제는 JavaScript 예제가 아님
+  if (isTsExample(example)) return false;
+  
+  // Java 예제는 JavaScript 예제가 아님
+  if (isJavaExample(example)) return false;
+  
+  // Python, Go, ASP 예제는 JavaScript 예제가 아님
+  if (isPythonExample(example) || isGoExample(example) || isAspExample(example)) return false;
+  
+  // Node.js 예제는 JavaScript 예제임
+  return (example.keywords && example.keywords.some((k: string) => 
+    k.toLowerCase().includes('javascript') || 
+    k.toLowerCase().includes('nodejs') || 
+    k.toLowerCase().includes('js') ||
+    k.toLowerCase().includes('node'))) ||
+    (example.id && example.id.toLowerCase().includes('nodejs')) ||
+    (example.id && example.id.toLowerCase().includes('javascript'));
+};
+
+/**
+ * 모든 라이브러리의 예제 데이터를 캐시에 로드합니다.
+ */
+function initializeCache(): void {
+  // 각 라이브러리의 예제 데이터를 캐시에 저장
+  cache.setLibraryCache('nodejs', NodejsExamplesLibrary.getExamples());
+  cache.setLibraryCache('java', JavaExamplesLibrary.getExamples());
+  cache.setLibraryCache('python', PythonExamplesLibrary.getExamples());
+  cache.setLibraryCache('go', GoExamplesLibrary.getExamples());
+  cache.setLibraryCache('asp', AspExamplesLibrary.getExamples());
+}
+
+/**
+ * 캐시된 모든 예제 데이터를 반환합니다.
+ */
+function getAllCachedExamples(): any[] {
+  const allExamples: any[] = [];
+  
+  // 각 라이브러리에서 캐시된 데이터 가져오기
+  const nodeExamples = cache.getLibraryCache('nodejs') || [];
+  const javaExamples = cache.getLibraryCache('java') || [];
+  const pythonExamples = cache.getLibraryCache('python') || [];
+  const goExamples = cache.getLibraryCache('go') || [];
+  const aspExamples = cache.getLibraryCache('asp') || [];
+  
+  return [...nodeExamples, ...javaExamples, ...pythonExamples, ...goExamples, ...aspExamples];
+}
+
+/**
+ * 검색 결과를 포맷팅하여 반환합니다.
+ */
+function formatSearchResults(results: any[], query: string, limit: number): ToolResult {
+  if (results.length === 0) {
+    const allCategories = [
+      ...NodejsExamplesLibrary.getCategories(),
+      ...JavaExamplesLibrary.getCategories(),
+      ...PythonExamplesLibrary.getCategories(),
+      ...GoExamplesLibrary.getCategories(),
+      ...AspExamplesLibrary.getCategories()
+    ];
+    const uniqueCategories = [...new Set(allCategories)];
+    
+    return {
+      content: [{
+        type: 'text',
+        text: `"${query}"에 대한 예제 코드를 찾을 수 없습니다.\n\n제안사항:\n- SMS, LMS, 알림톡 등의 메시지 타입으로 검색해보세요\n- Node.js, JavaScript, TypeScript, Java, Kotlin, Python 등의 언어로 검색해보세요\n- 에러처리, 웹훅, 상태조회 등의 기능으로 검색해보세요\n- 사용 가능한 카테고리: ${uniqueCategories.join(', ')}`
+      }]
+    };
+  }
+
+  // 결과 포맷팅
+  const formattedResults = results.map((example: any) => {
+    let language = 'javascript';
+    if (isTsExample(example)) {
+      language = 'typescript';
+    } else if (isJavaExample(example)) {
+      if (example.keywords.some((k: string) => k.toLowerCase().includes('kotlin'))) {
+        language = 'kotlin';
+      } else {
+        language = 'java';
+      }
+    } else if (isPythonExample(example)) {
+      language = 'python';
+    } else if (isGoExample(example)) {
+      language = 'go';
+    } else if (isAspExample(example)) {
+      language = 'vbscript';
+    } else if (isJsExample(example)) {
+      language = 'javascript';
+    }
+
+    return {
+      id: example.id,
+      title: example.title,
+      description: example.description,
+      category: example.category,
+      language: language,
+      usage: example.usage,
+      keywords: example.keywords,
+      codePreview: example.code.substring(0, 200) + (example.code.length > 200 ? '...' : ''),
+      fullCode: example.code,
+      url: example.url
+    };
+  });
+
+  return {
+    content: [{
+      type: 'text',
+      text: `"${query}"에 대한 ${results.length}개의 예제 코드를 찾았습니다.\n\n${formattedResults.map((result: any) => 
+        `## ${result.title}\n**카테고리**: ${result.category}\n**언어**: ${result.language}\n**사용법**: ${result.usage}\n\n**코드 미리보기**:\n\`\`\`${result.language}\n${result.codePreview}\n\`\`\`\n\n**전체 코드**:\n\`\`\`${result.language}\n${result.fullCode}\n\`\`\`\n\n**URL**: ${result.url}\n`
+      ).join('\n---\n\n')}`
+    }]
+  };
+}
+
 export async function handleLocalSearch(args: Record<string, unknown>): Promise<ToolResult> {
   const { query, category, limit = 5 } = args as unknown as ExampleSearchArgs;
   try {
+    // 캐시 초기화 (첫 실행 시에만)
+    if (cache.getCacheStats().libraryCount === 0) {
+      initializeCache();
+    }
+
+    // 검색 결과 캐시 확인
+    const cacheKey = `${query}-${category || 'all'}-${limit}`;
+    const cachedResults = cache.getSearchCache(cacheKey);
+    if (cachedResults) {
+      return formatSearchResults(cachedResults, query, limit);
+    }
+
     let results: any[] = [];
     const q = (query || '').toLowerCase();
 
@@ -53,170 +220,59 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
       return null;
     })();
 
-    const isTsExample = (example: any): boolean =>
-      (example.category && example.category.toLowerCase() === 'typescript') ||
-      (example.id && example.id.toLowerCase().includes('typescript'));
-
-    const isJavaExample = (example: any): boolean => {
-      // JavaScript 예제는 Java 예제가 아님을 명확히 구분
-      if (example.keywords && example.keywords.some((k: string) => 
-        k.toLowerCase().includes('javascript') || 
-        k.toLowerCase().includes('nodejs') || 
-        k.toLowerCase().includes('js') ||
-        k.toLowerCase().includes('node'))) {
-        return false;
-      }
-      return (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('java') || k.toLowerCase().includes('kotlin'))) ||
-        (example.id && example.id.toLowerCase().includes('java')) ||
-        (example.id && example.id.toLowerCase().includes('kotlin'));
-    };
-
-    const isPythonExample = (example: any): boolean =>
-      (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('python'))) ||
-      (example.id && example.id.toLowerCase().includes('python'));
-
-    const isGoExample = (example: any): boolean =>
-      (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('go') || k.toLowerCase().includes('golang'))) ||
-      (example.id && example.id.toLowerCase().includes('go'));
-
-    const isAspExample = (example: any): boolean =>
-      (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('asp') || k.toLowerCase().includes('vbscript'))) ||
-      (example.id && example.id.toLowerCase().includes('asp-'));
-
-    const isJsExample = (example: any): boolean => {
-      // TypeScript 예제는 JavaScript 예제가 아님
-      if (isTsExample(example)) return false;
-      
-      // Java 예제는 JavaScript 예제가 아님
-      if (isJavaExample(example)) return false;
-      
-      // Python, Go, ASP 예제는 JavaScript 예제가 아님
-      if (isPythonExample(example) || isGoExample(example) || isAspExample(example)) return false;
-      
-      // Node.js 예제는 JavaScript 예제임
-      return (example.keywords && example.keywords.some((k: string) => 
-        k.toLowerCase().includes('javascript') || 
-        k.toLowerCase().includes('nodejs') || 
-        k.toLowerCase().includes('js') ||
-        k.toLowerCase().includes('node'))) ||
-        (example.id && example.id.toLowerCase().includes('nodejs')) ||
-        (example.id && example.id.toLowerCase().includes('javascript'));
-    };
-
     // 언어별 라이브러리 선택 및 전체 검색 결과 준비
     let allResults: any[] = [];
     
     if (category) {
-      // 카테고리 필터가 있는 경우 모든 라이브러리에서 검색
-      const nodeExamples = NodejsExamplesLibrary.getExamplesByCategory(category);
-      const javaExamples = JavaExamplesLibrary.getExamplesByCategory(category);
-      const pythonExamples = PythonExamplesLibrary.getExamplesByCategory(category);
-      const goExamples = GoExamplesLibrary.getExamplesByCategory(category);
-      const aspExamples = AspExamplesLibrary.getExamplesByCategory(category);
-      
-      allResults = [...nodeExamples, ...javaExamples, ...pythonExamples, ...goExamples, ...aspExamples].filter((example: any) => 
-        example.title.toLowerCase().includes((query as string).toLowerCase()) ||
-        example.description.toLowerCase().includes((query as string).toLowerCase()) ||
-        example.keywords.some((k: string) => k.toLowerCase().includes((query as string).toLowerCase())) ||
-        example.code.toLowerCase().includes((query as string).toLowerCase())
-      );
-    } else {
-      // 전체 검색 - 모든 라이브러리에서 검색 후 합침
-      const nodeResults = NodejsExamplesLibrary.searchExamples(query as string);
-      const javaResults = JavaExamplesLibrary.searchExamples(query as string);
-      const pythonResults = PythonExamplesLibrary.searchExamples(query as string);
-      const goResults = GoExamplesLibrary.searchExamples(query as string);
-      const aspResults = AspExamplesLibrary.searchExamples(query as string);
-      
-      allResults = [...nodeResults, ...javaResults, ...pythonResults, ...goResults, ...aspResults];
-    }
-
-
-    // 언어 의도에 따른 필터 적용
-    if (languageIntent === 'ts') {
-      results = allResults.filter(isTsExample);
-    } else if (languageIntent === 'js') {
-      results = allResults.filter(isJsExample);
-    } else if (languageIntent === 'java') {
-      results = allResults.filter(isJavaExample);
-    } else if (languageIntent === 'python') {
-      results = allResults.filter(isPythonExample);
-    } else if (languageIntent === 'go') {
-      results = allResults.filter(isGoExample);
-    } else if (languageIntent === 'asp') {
-      results = allResults.filter(isAspExample);
-    } else {
-      // 언어 필터 없이 모든 결과 사용 (점수순 정렬)
-      results = allResults.sort((a: any, b: any) => (b.score || 0) - (a.score || 0));
-    }
-
-    // 결과 제한
-    results = results.slice(0, limit as number);
-
-    if (results.length === 0) {
-      const allCategories = [
-        ...NodejsExamplesLibrary.getCategories(),
-        ...JavaExamplesLibrary.getCategories(),
-        ...PythonExamplesLibrary.getCategories(),
-        ...GoExamplesLibrary.getCategories(),
-        ...AspExamplesLibrary.getCategories()
-      ];
-      const uniqueCategories = [...new Set(allCategories)];
-      
-      return {
-        content: [{
-          type: 'text',
-          text: `"${query}"에 대한 예제 코드를 찾을 수 없습니다.\n\n제안사항:\n- SMS, LMS, 알림톡 등의 메시지 타입으로 검색해보세요\n- Node.js, JavaScript, TypeScript, Java, Kotlin, Python 등의 언어로 검색해보세요\n- 에러처리, 웹훅, 상태조회 등의 기능으로 검색해보세요\n- 사용 가능한 카테고리: ${uniqueCategories.join(', ')}`
-        }]
-      };
-    }
-
-    // 결과 포맷팅
-    const formattedResults = results.map((example: any) => {
-      let language = 'javascript';
-      if (isTsExample(example)) {
-        language = 'typescript';
-      } else if (isJavaExample(example)) {
-        if (example.keywords.some((k: string) => k.toLowerCase().includes('kotlin'))) {
-          language = 'kotlin';
-        } else {
-          language = 'java';
-        }
-      } else if (isPythonExample(example)) {
-        language = 'python';
-      } else if (isGoExample(example)) {
-        language = 'go';
-      } else if (isAspExample(example)) {
-        language = 'vbscript';
-      } else if (isJsExample(example)) {
-        language = 'javascript';
+      // 카테고리 필터가 있는 경우 - 캐시에서 해당 카테고리만 가져오기
+      const cachedCategory = cache.getCategoryCache(category);
+      if (cachedCategory) {
+        allResults = cachedCategory;
+      } else {
+        // 카테고리별 예제를 캐시에 저장
+        const nodeExamples = NodejsExamplesLibrary.getExamplesByCategory(category);
+        const javaExamples = JavaExamplesLibrary.getExamplesByCategory(category);
+        const pythonExamples = PythonExamplesLibrary.getExamplesByCategory(category);
+        const goExamples = GoExamplesLibrary.getExamplesByCategory(category);
+        const aspExamples = AspExamplesLibrary.getExamplesByCategory(category);
+        
+        allResults = [...nodeExamples, ...javaExamples, ...pythonExamples, ...goExamples, ...aspExamples];
+        cache.setCategoryCache(category, allResults);
       }
+    } else {
+      // 전체 검색 - 캐시된 모든 예제 사용
+      allResults = getAllCachedExamples();
+    }
 
-      return {
-        id: example.id,
-        title: example.title,
-        description: example.description,
-        category: example.category,
-        language: language,
-        usage: example.usage,
-        keywords: example.keywords,
-        codePreview: example.code.substring(0, 200) + (example.code.length > 200 ? '...' : ''),
-        fullCode: example.code,
-        url: example.url
-      };
-    });
+    // 가중치 기반 검색 수행
+    let scoredResults = WeightedSearchEngine.searchWithCategoryFilter(allResults, query as string, category);
+    
+    // 언어 필터 적용
+    if (languageIntent === 'ts') {
+      scoredResults = WeightedSearchEngine.searchWithLanguageFilter(allResults, query as string, isTsExample);
+    } else if (languageIntent === 'js') {
+      scoredResults = WeightedSearchEngine.searchWithLanguageFilter(allResults, query as string, isJsExample);
+    } else if (languageIntent === 'java') {
+      scoredResults = WeightedSearchEngine.searchWithLanguageFilter(allResults, query as string, isJavaExample);
+    } else if (languageIntent === 'python') {
+      scoredResults = WeightedSearchEngine.searchWithLanguageFilter(allResults, query as string, isPythonExample);
+    } else if (languageIntent === 'go') {
+      scoredResults = WeightedSearchEngine.searchWithLanguageFilter(allResults, query as string, isGoExample);
+    } else if (languageIntent === 'asp') {
+      scoredResults = WeightedSearchEngine.searchWithLanguageFilter(allResults, query as string, isAspExample);
+    }
 
-    const languageFilterText = languageIntent ? 
-      ` (언어 필터: ${languageIntent === 'ts' ? 'TypeScript' : languageIntent === 'js' ? 'JavaScript/Node.js' : languageIntent === 'java' ? 'Java/Kotlin' : languageIntent === 'python' ? 'Python' : languageIntent === 'go' ? 'Go' : languageIntent === 'asp' ? 'Classic ASP (VBScript)' : 'JavaScript/Node.js'})` : '';
+    // 관련성 있는 결과만 필터링하고 제한
+    const relevantResults = WeightedSearchEngine.filterRelevantResults(scoredResults);
+    const limitedResults = WeightedSearchEngine.limitResults(relevantResults, limit as number);
+    
+    // 결과를 Example 형태로 변환
+    results = limitedResults.map(scoredResult => scoredResult.example);
 
-    return {
-      content: [{
-        type: 'text',
-        text: `"${query}"에 대한 ${results.length}개의 예제 코드를 찾았습니다.${languageFilterText}\n\n${formattedResults.map((result: any) => 
-          `## ${result.title}\n**카테고리**: ${result.category}\n**언어**: ${result.language}\n**사용법**: ${result.usage}\n\n**코드 미리보기**:\n\`\`\`${result.language}\n${result.codePreview}\n\`\`\`\n\n**전체 코드**:\n\`\`\`${result.language}\n${result.fullCode}\n\`\`\`\n\n**URL**: ${result.url}\n`
-        ).join('\n---\n\n')}`
-      }]
-    };
+    // 검색 결과를 캐시에 저장
+    cache.setSearchCache(cacheKey, results);
+
+    return formatSearchResults(results, query, limit);
 
   } catch (error) {
     return {
