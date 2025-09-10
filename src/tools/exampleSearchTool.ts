@@ -2,7 +2,7 @@
  * @file SOLAPI 예제 코드 검색 도구
  * @description 실제 사용 가능한 코드 스니펫을 빠르게 검색
  */
-import { SolapiExamplesLibrary } from '../data/solapiExamples.js';
+import { NodejsExamplesLibrary } from '../data/nodejsExamples.js';
 import type { ToolDefinition, ExampleSearchArgs, ExampleDetailArgs, ToolResult } from '../types/index.js';
 
 export const exampleSearchTool: ToolDefinition = {
@@ -51,7 +51,7 @@ export async function handleExampleSearch(args: Record<string, unknown>): Promis
 
     // 카테고리 필터가 있는 경우
     if (category) {
-      const categoryExamples = SolapiExamplesLibrary.getExamplesByCategory(category);
+      const categoryExamples = NodejsExamplesLibrary.getExamplesByCategory(category);
       results = categoryExamples.filter((example: any) => 
         example.title.toLowerCase().includes(query.toLowerCase()) ||
         example.description.toLowerCase().includes(query.toLowerCase()) ||
@@ -60,7 +60,7 @@ export async function handleExampleSearch(args: Record<string, unknown>): Promis
       );
     } else {
       // 전체 검색
-      results = SolapiExamplesLibrary.searchExamples(query);
+      results = NodejsExamplesLibrary.searchExamples(query);
     }
 
     // 언어 의도에 따른 필터 적용
@@ -77,7 +77,7 @@ export async function handleExampleSearch(args: Record<string, unknown>): Promis
       return {
         content: [{
           type: 'text',
-          text: `"${query}"에 대한 예제 코드를 찾을 수 없습니다.\n\n제안사항:\n- SMS, LMS, 알림톡 등의 메시지 타입으로 검색해보세요\n- TypeScript, 에러처리, 웹훅 등의 기능으로 검색해보세요\n- 사용 가능한 카테고리: ${SolapiExamplesLibrary.getCategories().join(', ')}`
+          text: `"${query}"에 대한 예제 코드를 찾을 수 없습니다.\n\n제안사항:\n- SMS, LMS, 알림톡 등의 메시지 타입으로 검색해보세요\n- TypeScript, 에러처리, 웹훅 등의 기능으로 검색해보세요\n- 사용 가능한 카테고리: ${NodejsExamplesLibrary.getCategories().join(', ')}`
         }]
       };
     }
@@ -137,13 +137,13 @@ export const exampleDetailTool: ToolDefinition = {
 export async function handleExampleDetail(args: Record<string, unknown>): Promise<ToolResult> {
   const { id } = args as unknown as ExampleDetailArgs;
   try {
-    const example = SolapiExamplesLibrary.getExampleById(id);
+    const example = NodejsExamplesLibrary.getExampleById(id);
     
     if (!example) {
       return {
         content: [{
           type: 'text',
-          text: `예제 ID "${id}"를 찾을 수 없습니다.\n\n사용 가능한 예제들:\n${SolapiExamplesLibrary.getExamples().map((e: any) => 
+          text: `예제 ID "${id}"를 찾을 수 없습니다.\n\n사용 가능한 예제들:\n${NodejsExamplesLibrary.getExamples().map((e: any) => 
             `- **${e.id}**: ${e.title} (${e.category})`
           ).join('\n')}`
         }]

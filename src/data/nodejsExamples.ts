@@ -1,20 +1,10 @@
+import type {Example} from "../types";
+
 /**
  * SOLAPI Node.js SDK 예제 코드 라이브러리
- * @description 실제 사용 가능한 코드 스니펫들을 내장하여 빠른 검색 제공
+ * @description Node.js/JavaScript/TypeScript용 실제 사용 가능한 코드 스니펫들을 내장하여 빠른 검색 제공
  */
-
-interface Example {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  keywords: string[];
-  code: string;
-  usage: string;
-  url: string;
-}
-
-export class SolapiExamplesLibrary {
+export class NodejsExamplesLibrary {
   /**
    * 모든 예제 코드 반환
    * @returns 예제 코드 배열
@@ -26,7 +16,7 @@ export class SolapiExamplesLibrary {
         title: 'SMS 기본 발송',
         description: '단문 메시지를 발송하는 기본적인 예제입니다.',
         category: 'SMS',
-        keywords: ['sms', '발송', '기본', '단문', '메시지'],
+        keywords: ['sms', '발송', '기본', '단문', '메시지', 'nodejs', 'javascript', 'js'],
         code: `const solapi = require('solapi').default;
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
@@ -85,7 +75,7 @@ sendManySMS();`,
         title: 'LMS 발송',
         description: '장문 메시지 서비스(LMS)를 발송하는 예제입니다.',
         category: 'LMS',
-        keywords: ['lms', '장문', '발송', '제목', '2000바이트'],
+        keywords: ['lms', '장문', '발송', '제목', '2000바이트', 'nodejs', 'javascript'],
         code: `const solapi = require('solapi').default;
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
@@ -112,7 +102,7 @@ sendLMS();`,
         title: '알림톡 발송',
         description: '카카오톡 알림톡을 발송하는 예제입니다.',
         category: '알림톡',
-        keywords: ['알림톡', '카카오톡', '템플릿', '변수', '버튼'],
+        keywords: ['알림톡', '카카오톡', '템플릿', '변수', '버튼', 'nodejs', 'javascript'],
         code: `const solapi = require('solapi').default;
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
@@ -153,7 +143,7 @@ sendAlimtalk();`,
         title: '잔액 확인',
         description: '계정의 현재 잔액을 확인하는 예제입니다.',
         category: '계정관리',
-        keywords: ['잔액', 'balance', '포인트', '확인', '조회'],
+        keywords: ['잔액', 'balance', '포인트', '확인', '조회', 'nodejs', 'javascript'],
         code: `const solapi = require('solapi').default;
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
@@ -176,7 +166,7 @@ checkBalance();`,
         title: '메시지 상태 조회',
         description: '발송한 메시지의 상태를 조회하는 예제입니다.',
         category: '상태조회',
-        keywords: ['상태', '조회', '메시지', '발송', '결과'],
+        keywords: ['상태', '조회', '메시지', '발송', '결과', 'nodejs', 'javascript'],
         code: `const solapi = require('solapi').default;
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
@@ -200,7 +190,7 @@ getMessageStatus();`,
         title: '예약 발송',
         description: '특정 시간에 메시지를 발송하도록 예약하는 예제입니다.',
         category: '예약발송',
-        keywords: ['예약', '발송', '스케줄', '시간', '지연'],
+        keywords: ['예약', '발송', '스케줄', '시간', '지연', 'nodejs', 'javascript'],
         code: `const solapi = require('solapi').default;
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
@@ -231,7 +221,7 @@ scheduleMessage();`,
         title: '웹훅 처리',
         description: '발송 결과를 받는 웹훅 핸들러 예제입니다.',
         category: '웹훅',
-        keywords: ['웹훅', 'webhook', '콜백', '결과', '처리'],
+        keywords: ['웹훅', 'webhook', '콜백', '결과', '처리', 'nodejs', 'javascript', 'express'],
         code: `const express = require('express');
 const app = express();
 
@@ -271,7 +261,7 @@ app.listen(3000, () => {
         title: '에러 처리',
         description: 'SOLAPI 사용 시 발생할 수 있는 에러를 처리하는 예제입니다.',
         category: '에러처리',
-        keywords: ['에러', '처리', '예외', '오류', '핸들링'],
+        keywords: ['에러', '처리', '예외', '오류', '핸들링', 'nodejs', 'javascript'],
         code: `const solapi = require('solapi').default;
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
@@ -301,11 +291,273 @@ sendWithErrorHandling();`,
         url: 'https://github.com/solapi/solapi-nodejs/tree/master/examples/javascript/common'
       },
       {
+        id: 'rcs-send',
+        title: 'RCS 메시지 발송',
+        description: 'RCS(Rich Communication Services) 메시지를 발송하는 예제입니다.',
+        category: 'RCS',
+        keywords: ['rcs', '브랜드', '버튼', '웹링크', '예약발송', 'nodejs', 'javascript'],
+        code: `const {SolapiMessageService} = require('solapi');
+const messageService = new SolapiMessageService(
+  'YOUR_API_KEY',
+  'YOUR_API_SECRET'
+);
+
+// RCS 메시지 발송
+async function sendRCS() {
+  try {
+    const result = await messageService.sendOne({
+      to: '01012345678',
+      from: '01087654321',
+      text: 'RCS 메시지 테스트입니다.',
+      rcsOptions: {
+        brandId: 'YOUR_BRAND_ID',
+        buttons: [
+          {
+            buttonType: 'WL',
+            buttonName: '웹링크 버튼',
+            link: 'https://developers.solapi.com'
+          }
+        ]
+      }
+    });
+    console.log('RCS 발송 성공:', result);
+  } catch (error) {
+    console.error('RCS 발송 실패:', error);
+  }
+}
+
+sendRCS();`,
+        usage: 'RCS를 지원하는 단말기에 브랜드 메시지를 발송해야 하는 경우',
+        url: 'https://github.com/solapi/solapi-nodejs/tree/master/examples/javascript/common'
+      },
+      {
+        id: 'voice-send',
+        title: '음성 메시지 발송',
+        description: '음성으로 메시지를 전달하는 예제입니다.',
+        category: '음성메시지',
+        keywords: ['음성', 'voice', '전화', 'tts', '남성', '여성', 'nodejs', 'javascript'],
+        code: `const {SolapiMessageService} = require('solapi');
+const messageService = new SolapiMessageService(
+  'YOUR_API_KEY',
+  'YOUR_API_SECRET'
+);
+
+async function sendVoiceMessage() {
+  try {
+    const result = await messageService.send({
+      to: '01012345678',
+      from: '01087654321',
+      text: '음성 메시지 테스트입니다. 실제 수신자에게 들리는 내용입니다.',
+      voiceOptions: {
+        voiceType: 'FEMALE', // MALE 또는 FEMALE
+        headerMessage: '보이스 메시지 테스트',
+        tailMessage: '감사합니다.'
+      }
+    });
+    console.log('음성 메시지 발송 성공:', result);
+  } catch (error) {
+    console.error('음성 메시지 발송 실패:', error);
+  }
+}
+
+sendVoiceMessage();`,
+        usage: '문자 대신 음성으로 메시지를 전달해야 하는 경우',
+        url: 'https://github.com/solapi/solapi-nodejs/tree/master/examples/javascript/common'
+      },
+      {
+        id: 'mms-send',
+        title: 'MMS(사진 문자) 발송',
+        description: '이미지가 포함된 사진 문자를 발송하는 예제입니다.',
+        category: 'MMS',
+        keywords: ['mms', '사진', '이미지', '멀티미디어', '첨부파일', 'nodejs', 'javascript'],
+        code: `const path = require('path');
+const {SolapiMessageService} = require('solapi');
+const messageService = new SolapiMessageService(
+  'YOUR_API_KEY',
+  'YOUR_API_SECRET'
+);
+
+async function sendMMS() {
+  try {
+    // 이미지 파일 업로드
+    const uploadResult = await messageService.uploadFile(
+      path.join(__dirname, 'image.jpg'), 
+      'MMS'
+    );
+    
+    // MMS 발송
+    const result = await messageService.sendOne({
+      to: '01012345678',
+      from: '01087654321',
+      text: '사진 문자 테스트입니다.',
+      subject: 'MMS 테스트',
+      imageId: uploadResult.fileId
+    });
+    console.log('MMS 발송 성공:', result);
+  } catch (error) {
+    console.error('MMS 발송 실패:', error);
+  }
+}
+
+sendMMS();`,
+        usage: '이미지와 함께 메시지를 발송해야 하는 경우',
+        url: 'https://github.com/solapi/solapi-nodejs/tree/master/examples/javascript/common'
+      },
+      {
+        id: 'friendtalk-send',
+        title: '카카오 친구톡 발송',
+        description: '카카오톡 친구톡을 발송하는 예제입니다.',
+        category: '친구톡',
+        keywords: ['친구톡', '카카오톡', 'pfid', '비즈니스채널', 'nodejs', 'javascript'],
+        code: `const {SolapiMessageService} = require('solapi');
+const messageService = new SolapiMessageService(
+  'YOUR_API_KEY',
+  'YOUR_API_SECRET'
+);
+
+async function sendFriendtalk() {
+  try {
+    const result = await messageService.sendOne({
+      to: '01012345678',
+      from: '01087654321',
+      text: '안녕하세요! 카카오 친구톡 테스트 메시지입니다.',
+      kakaoOptions: {
+        pfId: 'YOUR_PF_ID'
+      }
+    });
+    console.log('친구톡 발송 성공:', result);
+  } catch (error) {
+    console.error('친구톡 발송 실패:', error);
+  }
+}
+
+sendFriendtalk();`,
+        usage: '카카오톡 친구톡을 발송해야 하는 경우',
+        url: 'https://github.com/solapi/solapi-nodejs/tree/master/examples/javascript/common'
+      },
+      {
+        id: 'get-blacks',
+        title: '080 차단 목록 조회',
+        description: '080 수신 거부 목록을 조회하는 예제입니다.',
+        category: 'IAM',
+        keywords: ['차단', '080', '수신거부', '블랙리스트', '조회', 'nodejs', 'javascript'],
+        code: `const {SolapiMessageService} = require('solapi');
+const messageService = new SolapiMessageService(
+  'YOUR_API_KEY',
+  'YOUR_API_SECRET'
+);
+
+async function getBlackList() {
+  try {
+    const result = await messageService.getBlacks({
+      // senderNumber: '029302266', // 특정 발신번호로 검색
+      // startDate: '2023-01-01 00:00:00',
+      // endDate: '2023-12-31 23:59:59'
+    });
+    
+    console.log('차단 목록:', result.blackList);
+    
+    // 다음 페이지가 있을 경우
+    if (result.nextKey) {
+      const nextPage = await messageService.getBlacks({
+        startKey: result.nextKey
+      });
+      console.log('다음 페이지:', nextPage.blackList);
+    }
+  } catch (error) {
+    console.error('차단 목록 조회 실패:', error);
+  }
+}
+
+getBlackList();`,
+        usage: '발송 전 차단된 번호를 확인해야 하는 경우',
+        url: 'https://github.com/solapi/solapi-nodejs/tree/master/examples/javascript/common'
+      },
+      {
+        id: 'get-messages-detailed',
+        title: '메시지 상세 조회',
+        description: '발송한 메시지의 상세 정보를 조회하는 예제입니다.',
+        category: '상태조회',
+        keywords: ['메시지', '조회', '상태', '발송결과', '통계', 'nodejs', 'javascript'],
+        code: `const {SolapiMessageService} = require('solapi');
+const messageService = new SolapiMessageService(
+  'YOUR_API_KEY',
+  'YOUR_API_SECRET'
+);
+
+async function getDetailedMessages() {
+  try {
+    // 전체 메시지 조회
+    const result = await messageService.getMessages({
+      limit: 10,
+      // messageId: 'M4V...', // 특정 메시지 ID로 검색
+      // from: '01087654321', // 발신번호로 검색
+      // to: '01012345678', // 수신번호로 검색
+      // type: 'SMS', // 메시지 타입으로 검색
+      startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7일 전
+      endDate: new Date()
+    });
+    
+    console.log('메시지 목록:', result.messageList);
+    console.log('총 개수:', result.totalCount);
+    
+    // 페이징 처리
+    if (result.nextKey) {
+      const nextPage = await messageService.getMessages({
+        startKey: result.nextKey
+      });
+      console.log('다음 페이지:', nextPage.messageList);
+    }
+  } catch (error) {
+    console.error('메시지 조회 실패:', error);
+  }
+}
+
+getDetailedMessages();`,
+        usage: '발송한 메시지의 상태를 상세히 확인해야 하는 경우',
+        url: 'https://github.com/solapi/solapi-nodejs/tree/master/examples/javascript/common'
+      },
+      {
+        id: 'get-statistics',
+        title: '발송 통계 조회',
+        description: '메시지 발송 통계를 조회하는 예제입니다.',
+        category: '통계',
+        keywords: ['통계', 'statistics', '성공률', '발송량', '분석', 'nodejs', 'javascript'],
+        code: `const {SolapiMessageService} = require('solapi');
+const messageService = new SolapiMessageService(
+  'YOUR_API_KEY',
+  'YOUR_API_SECRET'
+);
+
+async function getStatistics() {
+  try {
+    const result = await messageService.getStatistics({
+      startDate: '2023-01-01 00:00:00',
+      endDate: '2023-12-31 23:59:59',
+      // messageType: 'SMS', // SMS, LMS, MMS, ATA 등
+      // groupBy: 'DATE' // DATE, HOUR, MONTH 등
+    });
+    
+    console.log('발송 통계:', result);
+    console.log('총 발송 건수:', result.totalCount);
+    console.log('성공 건수:', result.successCount);
+    console.log('실패 건수:', result.failCount);
+    console.log('성공률:', (result.successCount / result.totalCount * 100).toFixed(2) + '%');
+  } catch (error) {
+    console.error('통계 조회 실패:', error);
+  }
+}
+
+getStatistics();`,
+        usage: '메시지 발송 성과를 분석해야 하는 경우',
+        url: 'https://github.com/solapi/solapi-nodejs/tree/master/examples/javascript/common'
+      },
+      {
         id: 'typescript-example',
         title: 'TypeScript 사용 예제',
         description: 'TypeScript로 SOLAPI를 사용하는 예제입니다.',
         category: 'TypeScript',
-        keywords: ['typescript', 'ts', '타입', '인터페이스', '제네릭'],
+        keywords: ['typescript', 'ts', '타입', '인터페이스', '제네릭', 'nodejs'],
         code: `import Solapi from 'solapi';
 
 type Message = {
@@ -335,7 +587,7 @@ async function sendManyTS() {
 }
 
 sendManyTS();`,
-        usage: 'TypeScript 프로젝트에서 SOLAPI를 사용하는 경우',
+        usage: 'TypeScript 프로젝트에서 SOLAPI를를 사용하는 경우',
         url: 'https://github.com/solapi/solapi-nodejs/tree/master/examples/javascript/common'
       }
     ];

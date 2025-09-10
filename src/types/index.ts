@@ -115,3 +115,14 @@ export interface MemoryAnalysisArgs {
 export interface OverviewArgs {
   category?: string;
 }
+
+export interface Example {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  keywords: string[];
+  code: string;
+  usage: string;
+  url: string;
+}
