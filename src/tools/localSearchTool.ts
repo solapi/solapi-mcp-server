@@ -5,6 +5,7 @@
 import { NodejsExamplesLibrary } from '../data/nodejsExamples.js';
 import { JavaExamplesLibrary } from '../data/javaExamples.js';
 import { PythonExamplesLibrary } from '../data/pythonExamples.js';
+import { GoExamplesLibrary } from '../data/goExamples.js';
 import type { ToolDefinition, ExampleSearchArgs, ExampleDetailArgs, ToolResult } from '../types';
 
 export const localSearchTool: ToolDefinition = {
@@ -46,6 +47,7 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
       if (/\b(nodejs|node|js|javascript)\b/.test(q)) return 'js';
       if (/\b(java|kotlin)\b/.test(q)) return 'java';
       if (/\b(python|py)\b/.test(q)) return 'python';
+      if (/\b(go|golang)\b/.test(q)) return 'go';
       return null;
     })();
 
@@ -62,6 +64,10 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
       (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('python'))) ||
       (example.id && example.id.toLowerCase().includes('python'));
 
+    const isGoExample = (example: any): boolean =>
+      (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('go') || k.toLowerCase().includes('golang'))) ||
+      (example.id && example.id.toLowerCase().includes('go'));
+
     // 언어별 라이브러리 선택 및 전체 검색 결과 준비
     let allResults: any[] = [];
     
@@ -70,20 +76,22 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
       const nodeExamples = NodejsExamplesLibrary.getExamplesByCategory(category);
       const javaExamples = JavaExamplesLibrary.getExamplesByCategory(category);
       const pythonExamples = PythonExamplesLibrary.getExamplesByCategory(category);
+      const goExamples = GoExamplesLibrary.getExamplesByCategory(category);
       
-      allResults = [...nodeExamples, ...javaExamples, ...pythonExamples].filter((example: any) => 
-        example.title.toLowerCase().includes(query.toLowerCase()) ||
-        example.description.toLowerCase().includes(query.toLowerCase()) ||
-        example.keywords.some((k: string) => k.toLowerCase().includes(query.toLowerCase())) ||
-        example.code.toLowerCase().includes(query.toLowerCase())
+      allResults = [...nodeExamples, ...javaExamples, ...pythonExamples, ...goExamples].filter((example: any) => 
+        example.title.toLowerCase().includes((query as string).toLowerCase()) ||
+        example.description.toLowerCase().includes((query as string).toLowerCase()) ||
+        example.keywords.some((k: string) => k.toLowerCase().includes((query as string).toLowerCase())) ||
+        example.code.toLowerCase().includes((query as string).toLowerCase())
       );
     } else {
       // 전체 검색 - 모든 라이브러리에서 검색 후 합침
-      const nodeResults = NodejsExamplesLibrary.searchExamples(query);
-      const javaResults = JavaExamplesLibrary.searchExamples(query);
-      const pythonResults = PythonExamplesLibrary.searchExamples(query);
+      const nodeResults = NodejsExamplesLibrary.searchExamples(query as string);
+      const javaResults = JavaExamplesLibrary.searchExamples(query as string);
+      const pythonResults = PythonExamplesLibrary.searchExamples(query as string);
+      const goResults = GoExamplesLibrary.searchExamples(query as string);
       
-      allResults = [...nodeResults, ...javaResults, ...pythonResults];
+      allResults = [...nodeResults, ...javaResults, ...pythonResults, ...goResults];
     }
 
 
@@ -91,21 +99,28 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
     if (languageIntent === 'ts') {
       results = allResults.filter(isTsExample);
     } else if (languageIntent === 'js') {
-      results = allResults.filter((ex: any) => !isTsExample(ex) && !isJavaExample(ex) && !isPythonExample(ex));
+      results = allResults.filter((ex: any) => !isTsExample(ex) && !isJavaExample(ex) && !isPythonExample(ex) && !isGoExample(ex));
     } else if (languageIntent === 'java') {
       results = allResults.filter(isJavaExample);
     } else if (languageIntent === 'python') {
       results = allResults.filter(isPythonExample);
+    } else if (languageIntent === 'go') {
+      results = allResults.filter(isGoExample);
     } else {
       // 언어 필터 없이 모든 결과 사용 (점수순 정렬)
       results = allResults.sort((a: any, b: any) => (b.score || 0) - (a.score || 0));
     }
 
     // 결과 제한
-    results = results.slice(0, limit);
+    results = results.slice(0, limit as number);
 
     if (results.length === 0) {
-      const allCategories = [...NodejsExamplesLibrary.getCategories(), ...JavaExamplesLibrary.getCategories(), ...PythonExamplesLibrary.getCategories()];
+      const allCategories = [
+        ...NodejsExamplesLibrary.getCategories(),
+        ...JavaExamplesLibrary.getCategories(),
+        ...PythonExamplesLibrary.getCategories(),
+        ...GoExamplesLibrary.getCategories()
+      ];
       const uniqueCategories = [...new Set(allCategories)];
       
       return {
@@ -129,6 +144,8 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
         }
       } else if (isPythonExample(example)) {
         language = 'python';
+      } else if (isGoExample(example)) {
+        language = 'go';
       }
 
       return {
@@ -146,7 +163,7 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
     });
 
     const languageFilterText = languageIntent ? 
-      ` (언어 필터: ${languageIntent === 'ts' ? 'TypeScript' : languageIntent === 'java' ? 'Java/Kotlin' : languageIntent === 'python' ? 'Python' : 'JavaScript/Node.js'})` : '';
+      ` (언어 필터: ${languageIntent === 'ts' ? 'TypeScript' : languageIntent === 'java' ? 'Java/Kotlin' : languageIntent === 'python' ? 'Python' : languageIntent === 'go' ? 'Go' : 'JavaScript/Node.js'})` : '';
 
     return {
       content: [{
@@ -213,16 +230,29 @@ export async function handleExampleDetail(args: Record<string, unknown>): Promis
         language = 'python';
       }
     }
+
+    // Python 예제에서도 찾지 못한 경우 Go 예제에서 찾기
+    if (!example) {
+      example = GoExamplesLibrary.getExampleById(id);
+      if (example) {
+        language = 'go';
+      }
+    }
     
     // TypeScript 예제인지 확인 (Node.js 예제 중)
-    if (example && !language.includes('java') && language !== 'python') {
+    if (example && !language.includes('java') && language !== 'python' && language !== 'go') {
       if (example.category && example.category.toLowerCase() === 'typescript') {
         language = 'typescript';
       }
     }
     
     if (!example) {
-      const allExamples = [...NodejsExamplesLibrary.getExamples(), ...JavaExamplesLibrary.getExamples(), ...PythonExamplesLibrary.getExamples()];
+      const allExamples = [
+        ...NodejsExamplesLibrary.getExamples(),
+        ...JavaExamplesLibrary.getExamples(),
+        ...PythonExamplesLibrary.getExamples(),
+        ...GoExamplesLibrary.getExamples()
+      ];
       return {
         content: [{
           type: 'text',
