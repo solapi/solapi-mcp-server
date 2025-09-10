@@ -1,4 +1,4 @@
-import type { DocumentData, SearchResult, ISearchEngine } from '../types/index.js';
+import type { DocumentData, SearchResult, ISearchEngine } from '../types';
 
 /**
  * @class 검색 엔진
