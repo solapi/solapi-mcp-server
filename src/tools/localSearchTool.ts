@@ -97,31 +97,25 @@ const isJsExample = (example: any): boolean => {
 };
 
 /**
- * 모든 라이브러리의 예제 데이터를 캐시에 로드합니다.
+ * 모든 라이브러리의 예제 데이터를 캐시에 로드하고 인덱스를 구축합니다.
  */
 function initializeCache(): void {
   // 각 라이브러리의 예제 데이터를 캐시에 저장
-  cache.setLibraryCache('nodejs', NodejsExamplesLibrary.getExamples());
-  cache.setLibraryCache('java', JavaExamplesLibrary.getExamples());
-  cache.setLibraryCache('python', PythonExamplesLibrary.getExamples());
-  cache.setLibraryCache('go', GoExamplesLibrary.getExamples());
-  cache.setLibraryCache('asp', AspExamplesLibrary.getExamples());
-}
+  const nodeExamples = NodejsExamplesLibrary.getExamples();
+  const javaExamples = JavaExamplesLibrary.getExamples();
+  const pythonExamples = PythonExamplesLibrary.getExamples();
+  const goExamples = GoExamplesLibrary.getExamples();
+  const aspExamples = AspExamplesLibrary.getExamples();
+  
+  cache.setLibraryCache('nodejs', nodeExamples);
+  cache.setLibraryCache('java', javaExamples);
+  cache.setLibraryCache('python', pythonExamples);
+  cache.setLibraryCache('go', goExamples);
+  cache.setLibraryCache('asp', aspExamples);
 
-/**
- * 캐시된 모든 예제 데이터를 반환합니다.
- */
-function getAllCachedExamples(): any[] {
-  const allExamples: any[] = [];
-  
-  // 각 라이브러리에서 캐시된 데이터 가져오기
-  const nodeExamples = cache.getLibraryCache('nodejs') || [];
-  const javaExamples = cache.getLibraryCache('java') || [];
-  const pythonExamples = cache.getLibraryCache('python') || [];
-  const goExamples = cache.getLibraryCache('go') || [];
-  const aspExamples = cache.getLibraryCache('asp') || [];
-  
-  return [...nodeExamples, ...javaExamples, ...pythonExamples, ...goExamples, ...aspExamples];
+  // 모든 예제를 합쳐서 인덱스 구축
+  const allExamples = [...nodeExamples, ...javaExamples, ...pythonExamples, ...goExamples, ...aspExamples];
+  indexManager.buildIndex(allExamples);
 }
 
 /**
@@ -220,48 +214,19 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
       return null;
     })();
 
-    // 언어별 라이브러리 선택 및 전체 검색 결과 준비
-    let allResults: any[] = [];
-    
-    if (category) {
-      // 카테고리 필터가 있는 경우 - 캐시에서 해당 카테고리만 가져오기
-      const cachedCategory = cache.getCategoryCache(category);
-      if (cachedCategory) {
-        allResults = cachedCategory;
-      } else {
-        // 카테고리별 예제를 캐시에 저장
-        const nodeExamples = NodejsExamplesLibrary.getExamplesByCategory(category);
-        const javaExamples = JavaExamplesLibrary.getExamplesByCategory(category);
-        const pythonExamples = PythonExamplesLibrary.getExamplesByCategory(category);
-        const goExamples = GoExamplesLibrary.getExamplesByCategory(category);
-        const aspExamples = AspExamplesLibrary.getExamplesByCategory(category);
-        
-        allResults = [...nodeExamples, ...javaExamples, ...pythonExamples, ...goExamples, ...aspExamples];
-        cache.setCategoryCache(category, allResults);
-      }
-    } else {
-      // 전체 검색 - 캐시된 모든 예제 사용
-      allResults = getAllCachedExamples();
-    }
+    // 인덱스 기반 빠른 검색 수행
+    const searchResultIds = indexManager.searchComplex(
+      query as string, 
+      category, 
+      languageIntent || undefined
+    );
 
-    // 가중치 기반 검색 수행
-    let scoredResults = WeightedSearchEngine.searchWithCategoryFilter(allResults, query as string, category);
-    
-    // 언어 필터 적용
-    if (languageIntent === 'ts') {
-      scoredResults = WeightedSearchEngine.searchWithLanguageFilter(allResults, query as string, isTsExample);
-    } else if (languageIntent === 'js') {
-      scoredResults = WeightedSearchEngine.searchWithLanguageFilter(allResults, query as string, isJsExample);
-    } else if (languageIntent === 'java') {
-      scoredResults = WeightedSearchEngine.searchWithLanguageFilter(allResults, query as string, isJavaExample);
-    } else if (languageIntent === 'python') {
-      scoredResults = WeightedSearchEngine.searchWithLanguageFilter(allResults, query as string, isPythonExample);
-    } else if (languageIntent === 'go') {
-      scoredResults = WeightedSearchEngine.searchWithLanguageFilter(allResults, query as string, isGoExample);
-    } else if (languageIntent === 'asp') {
-      scoredResults = WeightedSearchEngine.searchWithLanguageFilter(allResults, query as string, isAspExample);
-    }
+    // 검색된 ID들로 실제 예제 객체들을 가져오기
+    const searchResults = indexManager.getExamplesByIds(searchResultIds);
 
+    // 가중치 기반 점수 계산 및 정렬
+    const scoredResults = WeightedSearchEngine.sortByScore(searchResults, query as string);
+    
     // 관련성 있는 결과만 필터링하고 제한
     const relevantResults = WeightedSearchEngine.filterRelevantResults(scoredResults);
     const limitedResults = WeightedSearchEngine.limitResults(relevantResults, limit as number);
