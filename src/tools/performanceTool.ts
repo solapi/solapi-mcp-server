@@ -3,7 +3,8 @@
  * @description MCP 서버의 검색 성능을 측정하고 웹 검색과 비교
  */
 import { NodejsExamplesLibrary } from '../data/nodejsExamples.js';
-import type { ToolDefinition, PerformanceTestArgs, MemoryAnalysisArgs, ToolResult } from '../types';
+import { WebSearchTool } from './webSearchTool.js';
+import type { ToolDefinition, PerformanceTestArgs, MemoryAnalysisArgs, ToolResult, ISearchEngine, ICacheManager } from '../types';
 
 export const performanceTool: ToolDefinition = {
   name: 'benchmark-solapi-search',
@@ -22,13 +23,18 @@ export const performanceTool: ToolDefinition = {
         type: 'string',
         description: '테스트할 검색 쿼리 (기본값: 자주 사용되는 쿼리들)',
         default: 'SMS 발송'
+      },
+      includeWebComparison: {
+        type: 'boolean',
+        description: '실제 웹 검색과 비교 측정 포함 (네트워크 필요, 기본값: false)',
+        default: false
       }
     }
   }
 };
 
-export async function handlePerformanceTest(args: Record<string, unknown>): Promise<ToolResult> {
-  const { iterations = 10, query = 'SMS 발송' } = args as unknown as PerformanceTestArgs;
+export async function handlePerformanceTest(args: Record<string, unknown>, searchEngine?: ISearchEngine, cache?: ICacheManager): Promise<ToolResult> {
+  const { iterations = 10, query = 'SMS 발송', includeWebComparison = false } = args as unknown as PerformanceTestArgs & { includeWebComparison?: boolean };
   try {
     const results: any[] = [];
     const totalStartTime = Date.now();
@@ -82,9 +88,23 @@ export async function handlePerformanceTest(args: Record<string, unknown>): Prom
     const overallMinTime = Math.min(...allTimes);
     const overallMaxTime = Math.max(...allTimes);
 
-    // 웹 검색과의 비교 (추정치)
-    const estimatedWebSearchTime = 2000; // 2초 (네트워크 지연 포함)
-    const speedImprovement = Math.round((estimatedWebSearchTime / overallAvgTime) * 100) / 100;
+    // 웹 검색과의 비교
+    let webSearchTime = 2000; // 기본 추정치 (2초)
+    let isActualWebTime = false;
+    
+    if (includeWebComparison && searchEngine && cache) {
+      try {
+        const webSearchTool = new WebSearchTool(searchEngine, cache);
+        const webStartTime = Date.now();
+        await webSearchTool.execute({ query: testQueries[0], limit: 5 });
+        webSearchTime = Date.now() - webStartTime;
+        isActualWebTime = true;
+      } catch (error) {
+        console.warn('웹 검색 측정 실패, 추정치 사용:', error);
+      }
+    }
+    
+    const speedImprovement = Math.round((webSearchTime / overallAvgTime) * 100) / 100;
 
     const advantages = [
       '네트워크 지연 없음',
@@ -97,7 +117,7 @@ export async function handlePerformanceTest(args: Record<string, unknown>): Prom
     return {
       content: [{
         type: 'text',
-        text: `# 🚀 SOLAPI MCP 서버 성능 테스트 결과\n\n## 📊 요약\n- **총 쿼리 수**: ${testQueries.length}\n- **총 반복 횟수**: ${totalSearches}\n- **총 소요 시간**: ${totalTime}ms\n- **평균 검색 시간**: ${Math.round(overallAvgTime * 100) / 100}ms\n- **최소 시간**: ${overallMinTime}ms\n- **최대 시간**: ${overallMaxTime}ms\n- **웹 검색 추정 시간**: ${estimatedWebSearchTime}ms\n- **속도 개선**: ${speedImprovement}x 빠름\n- **초당 검색 수**: ${Math.round((totalSearches / (totalTime / 1000)) * 100) / 100}\n\n## 📈 분석\n- **성능 등급**: ${overallAvgTime < 10 ? '매우 빠름' : overallAvgTime < 50 ? '빠름' : '보통'}\n- **권장사항**: ${overallAvgTime < 10 ? 'MCP 내부 검색이 웹 검색보다 훨씬 빠릅니다. 실시간 응답에 적합합니다.' : '성능이 양호하지만 추가 최적화를 고려해보세요.'}\n\n## ✅ 장점\n${advantages.map((advantage: string) => `- ${advantage}`).join('\n')}\n\n## 📋 상세 결과\n${results.map((result: any) => 
+        text: `# SOLAPI MCP 서버 성능 테스트 결과\n\n## 요약\n- **총 쿼리 수**: ${testQueries.length}\n- **총 반복 횟수**: ${totalSearches}\n- **총 소요 시간**: ${totalTime}ms\n- **평균 검색 시간**: ${Math.round(overallAvgTime * 100) / 100}ms\n- **최소 시간**: ${overallMinTime}ms\n- **최대 시간**: ${overallMaxTime}ms\n- **웹 검색 시간**: ${webSearchTime}ms ${isActualWebTime ? '(실제 측정)' : '(추정치)'}\n- **속도 개선**: ${speedImprovement}x 빠름\n- **초당 검색 수**: ${Math.round((totalSearches / (totalTime / 1000)) * 100) / 100}\n\n## 분석\n- **성능 등급**: ${overallAvgTime < 10 ? '매우 빠름' : overallAvgTime < 50 ? '빠름' : '보통'}\n- **권장사항**: ${overallAvgTime < 10 ? 'MCP 내부 검색이 웹 검색보다 훨씬 빠릅니다. 실시간 응답에 적합합니다.' : '성능이 양호하지만 추가 최적화를 고려해보세요.'}\n${isActualWebTime ? '\n- **웹 비교**: 실제 웹 검색 시간을 측정했습니다.' : '\n- **웹 비교**: 추정치를 사용했습니다. includeWebComparison: true로 실제 측정 가능합니다.'}\n\n## 장점\n${advantages.map((advantage: string) => `- ${advantage}`).join('\n')}\n\n## 상세 결과\n${results.map((result: any) => 
           `### ${result.query}\n- 반복 횟수: ${result.iterations}\n- 평균 시간: ${result.averageTime}ms\n- 최소 시간: ${result.minTime}ms\n- 최대 시간: ${result.maxTime}ms\n- 중간값: ${result.medianTime}ms\n- 총 결과 수: ${result.totalResults}`
         ).join('\n\n')}`
       }]
