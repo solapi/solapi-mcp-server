@@ -16,7 +16,7 @@ export class NodejsExamplesLibrary {
         title: 'SMS 기본 발송',
         description: '단문 메시지를 발송하는 기본적인 예제입니다.',
         category: 'SMS',
-        keywords: ['sms', '발송', '기본', '단문', '메시지', 'nodejs', 'javascript', 'js'],
+        keywords: ['sms', '발송', '기본', '단문', '메시지', 'nodejs', 'node.js', 'node', 'javascript', 'js'],
         code: `const solapi = require('solapi').default;
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
@@ -42,7 +42,7 @@ sendSMS();`,
         title: 'SMS 대량 발송',
         description: '여러 수신자에게 동시에 SMS를 발송하는 예제입니다.',
         category: 'SMS',
-        keywords: ['sms', '대량', '발송', '여러', '수신자', '배열', 'js', 'javascript', 'node', 'nodejs', 'sendMany'],
+        keywords: ['sms', '대량', '발송', '여러', '수신자', '배열', 'js', 'javascript', 'node', 'nodejs', 'node.js', 'sendMany'],
         code: `const solapi = require('solapi').default;
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
@@ -75,7 +75,7 @@ sendManySMS();`,
         title: 'LMS 발송',
         description: '장문 메시지 서비스(LMS)를 발송하는 예제입니다.',
         category: 'LMS',
-        keywords: ['lms', '장문', '발송', '제목', '2000바이트', 'nodejs', 'javascript'],
+        keywords: ['lms', '장문', '발송', '제목', '2000바이트', 'nodejs', 'node.js', 'node', 'javascript', 'js'],
         code: `const solapi = require('solapi').default;
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
@@ -102,7 +102,7 @@ sendLMS();`,
         title: '알림톡 발송',
         description: '카카오톡 알림톡을 발송하는 예제입니다.',
         category: '알림톡',
-        keywords: ['알림톡', '카카오톡', '템플릿', '변수', '버튼', 'nodejs', 'javascript'],
+        keywords: ['알림톡', '카카오톡', '템플릿', '변수', '버튼', 'nodejs', 'node.js', 'node', 'javascript', 'js'],
         code: `const solapi = require('solapi').default;
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
@@ -557,7 +557,7 @@ getStatistics();`,
         title: 'TypeScript 사용 예제',
         description: 'TypeScript로 SOLAPI를 사용하는 예제입니다.',
         category: 'TypeScript',
-        keywords: ['typescript', 'ts', '타입', '인터페이스', '제네릭', 'nodejs'],
+        keywords: ['typescript', 'ts', '타입', '인터페이스', '제네릭', 'nodejs', 'node.js', 'node', 'javascript', 'js'],
         code: `import Solapi from 'solapi';
 
 type Message = {
