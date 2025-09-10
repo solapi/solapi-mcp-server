@@ -7,7 +7,7 @@ import { JavaExamplesLibrary } from '../data/javaExamples.js';
 import type { ToolDefinition, ExampleSearchArgs, ExampleDetailArgs, ToolResult } from '../types';
 
 export const localSearchTool: ToolDefinition = {
-  name: 'search-solapi-local',
+  name: 'search-local-examples',
   description: '로컬에 저장된 SOLAPI 예제 코드와 문서를 검색합니다. 기본적으로 사용할 주요 검색 도구입니다. 코드 스니펫, 사용법, 카테고리별 검색이 가능합니다.',
   inputSchema: {
     type: 'object',
@@ -153,7 +153,7 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
  * 예제 코드 상세 조회
  */
 export const exampleDetailTool: ToolDefinition = {
-  name: 'get-solapi-local-detail',
+  name: 'get-local-examples-detail',
   description: '특정 로컬 예제 코드의 상세 정보를 조회합니다.',
   inputSchema: {
     type: 'object',

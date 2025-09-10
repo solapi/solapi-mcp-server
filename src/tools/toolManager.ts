@@ -50,7 +50,7 @@ export class ToolManager {
     // 성능 테스트 도구들 추가
     this.tools.set('benchmark-solapi-search', {
       getDefinition: () => performanceTool,
-      execute: handlePerformanceTest
+      execute: async (args) => await handlePerformanceTest(args, searchEngine, cache)
     });
     
     this.tools.set('analyze-memory-usage', {
