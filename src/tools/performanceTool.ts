@@ -2,7 +2,7 @@
  * @file 성능 테스트 도구
  * @description MCP 서버의 검색 성능을 측정하고 웹 검색과 비교
  */
-import { SolapiExamplesLibrary } from '../data/solapiExamples.js';
+import { NodejsExamplesLibrary } from '../data/nodejsExamples.js';
 import type { ToolDefinition, PerformanceTestArgs, MemoryAnalysisArgs, ToolResult } from '../types';
 
 export const performanceTool: ToolDefinition = {
@@ -42,7 +42,7 @@ export async function handlePerformanceTest(args: Record<string, unknown>): Prom
         const startTime = Date.now();
         
         // MCP 내부 검색 수행
-        const searchResults = SolapiExamplesLibrary.searchExamples(testQuery);
+        const searchResults = NodejsExamplesLibrary.searchExamples(testQuery);
         
         const endTime = Date.now();
         const searchTime = endTime - startTime;
@@ -135,7 +135,7 @@ export const memoryAnalysisTool: ToolDefinition = {
 export async function handleMemoryAnalysis(args: Record<string, unknown> = {}): Promise<ToolResult> {
   const { includeDetails = false } = args as unknown as MemoryAnalysisArgs;
   try {
-    const examples = SolapiExamplesLibrary.getExamples();
+    const examples = NodejsExamplesLibrary.getExamples();
     
     // 메모리 사용량 추정
     const totalExamples = examples.length;

@@ -2,8 +2,7 @@
 *.tsbuildinfo
 
 # 소스 파일 (npm 패키지에는 빌드된 파일만 포함)
-src/
-bin/
+src
 tsconfig.json
 
 # 개발 도구
@@ -23,3 +22,4 @@ temp/
 .env
 .npmrc
 .gitignore
+.claude

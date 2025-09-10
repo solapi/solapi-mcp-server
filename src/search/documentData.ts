@@ -1,7 +1,7 @@
 /**
  * SOLAPI 문서 데이터 관리
  */
-import { SolapiExamplesLibrary } from '../data/solapiExamples.js';
+import { NodejsExamplesLibrary } from '../data/nodejsExamples.js';
 import type { DocumentData, IDocumentDataManager } from '../types/index.js';
 
 export class DocumentDataManager {
@@ -125,7 +125,7 @@ export class DocumentDataManager {
     ];
 
     // 예제 코드를 문서 형태로 변환
-    const exampleDocs: DocumentData[] = SolapiExamplesLibrary.getExamples().map(example => ({
+    const exampleDocs: DocumentData[] = NodejsExamplesLibrary.getExamples().map(example => ({
       id: `example-${example.id}`,
       title: `[예제] ${example.title}`,
       content: `${example.description}\n\n사용법: ${example.usage}\n\n코드 예제:\n\`\`\`javascript\n${example.code}\n\`\`\``,
