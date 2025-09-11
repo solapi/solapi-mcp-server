@@ -222,7 +222,7 @@ function setupCursorConfig(): boolean {
     }
 
     const packageJson: PackageInfo = require('../../package.json');
-    const serverName = packageJson.name.replace(/[@\/]/g, '-');
+    const serverName = 'solapi';
 
     config.mcpServers[serverName] = {
       command: 'npx',
@@ -247,7 +247,7 @@ function setupCursorConfig(): boolean {
  */
 function showManualInstructions(): void {
   const packageJson: PackageInfo = require('../../package.json');
-  const serverName = packageJson.name.replace(/[@\/]/g, '-');
+  const serverName = 'solapi';
 
   console.log('\n📖 Manual setup instructions:');
   console.log('\n🔵 For Claude Desktop:');

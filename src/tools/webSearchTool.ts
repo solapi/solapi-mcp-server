@@ -15,7 +15,7 @@ export class WebSearchTool implements Tool {
    */
   getDefinition() {
     return {
-      name: 'search-solapi-web',
+      name: 'search-solapi-doc',
       description: '사용자가 명시적으로 웹 검색이나 최신 정보를 요청했을 때만 사용하세요. SOLAPI 웹사이트에서 실시간 정보를 검색합니다. 로컬 검색으로 충분하지 않거나 사용자가 웹에서 검색해달라고 명시적으로 요청한 경우에만 사용하세요.',
       inputSchema: {
         type: 'object',

@@ -25,12 +25,12 @@ export class ToolManager {
     setWebSearchTool(searchEngine, cache);
 
     // 로컬 검색 도구 (최우선 기본 도구)
-    this.tools.set('search-local-examples', {
+    this.tools.set('search-local-sdk', {
       getDefinition: () => localSearchTool,
       execute: handleLocalSearch
     });
 
-    this.tools.set('get-local-examples-detail', {
+    this.tools.set('get-local-sdk-detail', {
       getDefinition: () => exampleDetailTool,
       execute: handleExampleDetail
     });
@@ -38,8 +38,8 @@ export class ToolManager {
     this.tools.set('get-solapi-overview', overviewTool);
     
     
-    // 웹 검색 도구 (명시적 요청 시에만 사용)
-    this.tools.set('search-solapi-web', {
+    // 웹 검색 도구
+    this.tools.set('search-solapi-doc', {
       getDefinition: () => {
         const webSearchTool = new WebSearchTool(searchEngine, cache);
         return webSearchTool.getDefinition();

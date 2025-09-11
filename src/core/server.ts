@@ -16,8 +16,8 @@ import type { ServerConfig } from '../types';
  */
 export class OptimizedSolapiMcpServer {
   private server: Server;
-  private searchEngine: OptimizedSearchEngine;
-  private cache: CacheManager;
+  private readonly searchEngine: OptimizedSearchEngine;
+  private readonly cache: CacheManager;
   private toolManager: ToolManager;
   private isInitialized: boolean = false;
 

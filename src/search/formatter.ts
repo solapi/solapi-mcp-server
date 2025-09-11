@@ -1,4 +1,4 @@
-import type { SearchResult } from '../types/index.js';
+import type { SearchResult } from '../types';
 
 /**
  * 검색 결과 포맷팅 유틸리티
@@ -11,8 +11,8 @@ export class SearchResultFormatter {
    * @returns 포맷된 결과 문자열
    */
   static formatResults(query: string, results: SearchResult[]): string {
-    const header = `🔍 **SOLAPI 문서 검색 결과** (키워드: "${query}")\n`;
-    const stats = `📊 **${results.length}개 결과** | 관련도 점수 기준 정렬\n\n`;
+    const header = `SOLAPI 문서 검색 결과 (키워드: "${query}")\n`;
+    const stats = `${results.length}개 결과 | 관련도 점수 기준 정렬\n\n`;
 
     const formattedResults = results
       .map((doc, index) => {
@@ -22,8 +22,8 @@ export class SearchResultFormatter {
 
         return [
           `## ${rank}. ${doc.title}`,
-          `🎯 **관련도**: ${score} ${scoreBar}`,
-          `📝 ${doc.content}`,
+          `관련도: ${score} ${scoreBar}`,
+          `${doc.content}`,
           doc.url ? `🔗 [자세히 보기](${doc.url})` : '',
           ''
         ].join('\n');

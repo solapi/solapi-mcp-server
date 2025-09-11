@@ -2,7 +2,7 @@
  * SOLAPI 문서 데이터 관리
  */
 import { NodejsExamplesLibrary } from '../data/nodejsExamples.js';
-import type { DocumentData, IDocumentDataManager } from '../types/index.js';
+import type { DocumentData, IDocumentDataManager } from '../types';
 
 export class DocumentDataManager {
   /**

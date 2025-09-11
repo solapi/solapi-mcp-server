@@ -14,8 +14,8 @@ import { WebSearchTool } from './webSearchTool.js';
 import type { ToolDefinition, ExampleSearchArgs, ExampleDetailArgs, ToolResult, ISearchEngine, ICacheManager } from '../types';
 
 export const localSearchTool: ToolDefinition = {
-  name: 'search-local-examples',
-  description: '로컬에 저장된 SOLAPI 예제 코드와 문서를 검색합니다. 기본적으로 사용할 주요 검색 도구입니다. 코드 스니펫, 사용법, 카테고리별 검색이 가능합니다.',
+  name: 'search-local-sdk',
+  description: '로컬에 저장된 SOLAPI SDK 예제 코드와 문서를 검색합니다. 기본적으로 사용할 주요 검색 도구입니다. 코드 스니펫, 사용법, 카테고리별 검색이 가능합니다.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -232,13 +232,13 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
       return await formatSearchResults(cachedResults, query, limit);
     }
 
-    let results: any[] = [];
+    let results: any[]
     const q = (query || '').toLowerCase();
 
     // 언어 자동 추론 - 더 정확한 패턴 매칭
     const languageIntent = (() => {
       if (/\b(ts|typescript)\b/.test(q)) return 'ts';
-      if (/\b(nodejs|node\.js|nodejs|javascript|js)\b/.test(q)) return 'js';
+      if (/\b(node\.js|nodejs|javascript|js)\b/.test(q)) return 'js';
       if (/\b(java|kotlin)\b/.test(q)) return 'java';
       if (/\b(python|py)\b/.test(q)) return 'python';
       if (/\b(go|golang)\b/.test(q)) return 'go';
@@ -286,7 +286,7 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
  * 예제 코드 상세 조회
  */
 export const exampleDetailTool: ToolDefinition = {
-  name: 'get-local-examples-detail',
+  name: 'get-local-sdk-detail',
   description: '특정 로컬 예제 코드의 상세 정보를 조회합니다.',
   inputSchema: {
     type: 'object',
