@@ -2,7 +2,7 @@
  * @file 가중치 기반 검색 엔진
  * @description 검색 결과의 관련도를 점수로 계산하여 정확한 순서로 정렬합니다.
  */
-import type { Example } from '../types/index.js';
+import type { Example } from '../types';
 
 export interface SearchScore {
   example: Example;
