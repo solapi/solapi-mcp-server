@@ -237,8 +237,8 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
 
     // 언어 자동 추론 - 더 정확한 패턴 매칭
     const languageIntent = (() => {
-      if (/\b(ts|typescript)\b/.test(q)) return 'ts';
-      if (/\b(node\.js|nodejs|javascript|js)\b/.test(q)) return 'js';
+      if (/\b(ts|typescript)\b/.test(q)) return 'typescript';
+      if (/\b(node\.js|nodejs|javascript|js)\b/.test(q)) return 'javascript';
       if (/\b(java|kotlin)\b/.test(q)) return 'java';
       if (/\b(python|py)\b/.test(q)) return 'python';
       if (/\b(go|golang)\b/.test(q)) return 'go';

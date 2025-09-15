@@ -19,50 +19,36 @@ export class WeightedSearchEngine {
     let score = 0;
     const matchedFields: string[] = [];
 
-    // 제목 매치 (가장 높은 가중치: 20점)
-    if (example.title.toLowerCase().includes(q)) {
-      score += 20;
-      matchedFields.push('title');
-    }
+    // 쿼리를 단어별로 분리하여 각각 매칭 점수 계산
+    const queryWords = q.split(/\s+/).filter(word => word.length > 0);
+    
+    // 전체 쿼리 매치 (가장 높은 가중치)
+    const fullQueryScore = this.calculateFieldScore(example, q, {
+      title: 20,
+      keywords: 15,
+      description: 10,
+      category: 8,
+      usage: 6,
+      code: 3,
+      id: 2
+    });
+    score += fullQueryScore.score;
+    matchedFields.push(...fullQueryScore.fields);
 
-    // 키워드 매치 (높은 가중치: 15점)
-    const keywordMatches = example.keywords.filter(keyword => 
-      keyword.toLowerCase().includes(q)
-    );
-    if (keywordMatches.length > 0) {
-      score += 15 * keywordMatches.length; // 매치된 키워드 수만큼 가중치 적용
-      matchedFields.push('keywords');
-    }
-
-    // 설명 매치 (중간 가중치: 10점)
-    if (example.description.toLowerCase().includes(q)) {
-      score += 10;
-      matchedFields.push('description');
-    }
-
-    // 카테고리 매치 (중간 가중치: 8점)
-    if (example.category.toLowerCase().includes(q)) {
-      score += 8;
-      matchedFields.push('category');
-    }
-
-    // 사용법 매치 (중간 가중치: 6점)
-    if (example.usage.toLowerCase().includes(q)) {
-      score += 6;
-      matchedFields.push('usage');
-    }
-
-    // 코드 매치 (낮은 가중치: 3점)
-    if (example.code.toLowerCase().includes(q)) {
-      score += 3;
-      matchedFields.push('code');
-    }
-
-    // ID 매치 (낮은 가중치: 2점)
-    if (example.id.toLowerCase().includes(q)) {
-      score += 2;
-      matchedFields.push('id');
-    }
+    // 개별 단어 매치 (중간 가중치)
+    queryWords.forEach(word => {
+      const wordScore = this.calculateFieldScore(example, word, {
+        title: 10,
+        keywords: 8,
+        description: 5,
+        category: 4,
+        usage: 3,
+        code: 2,
+        id: 1
+      });
+      score += wordScore.score;
+      matchedFields.push(...wordScore.fields);
+    });
 
     // 정확한 매치 보너스 (추가 점수)
     if (example.title.toLowerCase() === q) {
@@ -74,11 +60,73 @@ export class WeightedSearchEngine {
       score += 5; // 키워드가 정확히 일치하면 보너스
     }
 
+    // 중복 필드 제거
+    const uniqueMatchedFields = [...new Set(matchedFields)];
+
     return {
       example,
       score,
-      matchedFields
+      matchedFields: uniqueMatchedFields
     };
+  }
+
+  /**
+   * 특정 필드들에 대해 점수를 계산합니다.
+   */
+  private static calculateFieldScore(
+    example: Example, 
+    searchTerm: string, 
+    weights: { title: number; keywords: number; description: number; category: number; usage: number; code: number; id: number }
+  ): { score: number; fields: string[] } {
+    let score = 0;
+    const fields: string[] = [];
+
+    // 제목 매치
+    if (example.title.toLowerCase().includes(searchTerm)) {
+      score += weights.title;
+      fields.push('title');
+    }
+
+    // 키워드 매치
+    const keywordMatches = example.keywords.filter(keyword => 
+      keyword.toLowerCase().includes(searchTerm)
+    );
+    if (keywordMatches.length > 0) {
+      score += weights.keywords * keywordMatches.length;
+      fields.push('keywords');
+    }
+
+    // 설명 매치
+    if (example.description.toLowerCase().includes(searchTerm)) {
+      score += weights.description;
+      fields.push('description');
+    }
+
+    // 카테고리 매치
+    if (example.category.toLowerCase().includes(searchTerm)) {
+      score += weights.category;
+      fields.push('category');
+    }
+
+    // 사용법 매치
+    if (example.usage.toLowerCase().includes(searchTerm)) {
+      score += weights.usage;
+      fields.push('usage');
+    }
+
+    // 코드 매치
+    if (example.code.toLowerCase().includes(searchTerm)) {
+      score += weights.code;
+      fields.push('code');
+    }
+
+    // ID 매치
+    if (example.id.toLowerCase().includes(searchTerm)) {
+      score += weights.id;
+      fields.push('id');
+    }
+
+    return { score, fields };
   }
 
   /**
