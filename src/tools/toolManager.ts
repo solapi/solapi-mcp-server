@@ -1,7 +1,6 @@
 import { WebSearchTool } from './webSearchTool.js';
 import { OverviewTool } from './overviewTool.js';
 import { localSearchTool, handleLocalSearch, exampleDetailTool, handleExampleDetail, setWebSearchTool } from './localSearchTool.js';
-import { performanceTool, handlePerformanceTest, memoryAnalysisTool, handleMemoryAnalysis } from './performanceTool.js';
 import type { ISearchEngine, ICacheManager, ToolDefinition, ToolExecutor } from '../types';
 
 /**
@@ -48,17 +47,6 @@ export class ToolManager {
         const webSearchTool = new WebSearchTool(searchEngine, cache);
         return await webSearchTool.execute(args);
       }
-    });
-    
-    // 성능 테스트 도구들 추가
-    this.tools.set('benchmark-solapi-search', {
-      getDefinition: () => performanceTool,
-      execute: async (args) => await handlePerformanceTest(args, searchEngine, cache)
-    });
-    
-    this.tools.set('analyze-memory-usage', {
-      getDefinition: () => memoryAnalysisTool,
-      execute: handleMemoryAnalysis
     });
   }
 
