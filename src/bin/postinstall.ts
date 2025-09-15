@@ -148,7 +148,7 @@ function setupClaudeConfig(): boolean {
 
     config.mcpServers[serverName] = {
       command: 'npx',
-      args: ["-y", "@solapi/mcp-server"],
+      args: ["--latest", "-y", "@solapi/mcp-server"],
       env: {},
     };
 
