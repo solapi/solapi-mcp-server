@@ -46,6 +46,9 @@ const cache = SdkCacheManager.getInstance();
 // 인덱스 매니저 인스턴스
 const indexManager = SdkIndexManager.getInstance();
 
+// 즉시 초기화 (서버 시작 시)
+initializeCache();
+
 // 웹 검색 도구 인스턴스 (의존성 주입을 위해 나중에 설정)
 let webSearchTool: WebSearchTool | null = null;
 
@@ -220,12 +223,7 @@ async function formatSearchResults(results: any[], query: string, limit: number)
 export async function handleLocalSearch(args: Record<string, unknown>): Promise<ToolResult> {
   const { query, category, limit = 5 } = args as unknown as ExampleSearchArgs;
   try {
-    // 캐시 초기화 (첫 실행 시에만)
-    if (cache.getCacheStats().libraryCount === 0) {
-      initializeCache();
-    }
 
-    // 검색 결과 캐시 확인
     const cacheKey = `${query}-${category || 'all'}-${limit}`;
     const cachedResults = cache.getSearchCache(cacheKey);
     if (cachedResults) {
