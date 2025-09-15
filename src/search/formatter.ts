@@ -30,7 +30,7 @@ export class SearchResultFormatter {
       })
       .join('\n');
 
-    const footer = `\n💡 **검색 팁**: 더 정확한 결과를 원하면 구체적인 키워드를 사용하세요!`;
+    const footer = `\n💡 **검색 팁**: 더 정확한 결과를 원하면 구체적인 키워드를 사용하세요!\n`;
 
     return header + stats + formattedResults + footer;
   }
