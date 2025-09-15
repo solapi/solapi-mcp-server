@@ -1,6 +1,6 @@
 {
   "name": "@solapi/mcp-server",
-  "version": "1.5.6",
+  "version": "1.5.8",
   "description": "MCP server for SOLAPI document search and integration",
   "author": "solapi",
   "license": "MIT",

@@ -17,7 +17,7 @@ export class NodejsExamplesLibrary {
         description: '단문 메시지를 발송하는 기본적인 예제입니다.',
         category: 'SMS',
         keywords: ['sms', '발송', '기본', '단문', '메시지', 'nodejs', 'node.js', 'node', 'javascript', 'js'],
-        code: `const solapi = require('solapi').default;
+        code: `const {solapi} = require('solapi');
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
 async function sendSMS() {
@@ -43,7 +43,7 @@ sendSMS();`,
         description: '여러 수신자에게 동시에 SMS를 발송하는 예제입니다.',
         category: 'SMS',
         keywords: ['sms', '대량', '발송', '여러', '수신자', '배열', 'js', 'javascript', 'node', 'nodejs', 'node.js', 'sendMany'],
-        code: `const solapi = require('solapi').default;
+        code: `const {solapi} = require('solapi');
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
 async function sendManySMS() {
@@ -76,7 +76,7 @@ sendManySMS();`,
         description: '장문 메시지 서비스(LMS)를 발송하는 예제입니다.',
         category: 'LMS',
         keywords: ['lms', '장문', '발송', '제목', '2000바이트', 'nodejs', 'node.js', 'node', 'javascript', 'js'],
-        code: `const solapi = require('solapi').default;
+        code: `const {solapi} = require('solapi');
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
 async function sendLMS() {
@@ -103,7 +103,7 @@ sendLMS();`,
         description: '카카오톡 알림톡을 발송하는 예제입니다.',
         category: '알림톡',
         keywords: ['알림톡', '카카오톡', '템플릿', '변수', '버튼', 'nodejs', 'node.js', 'node', 'javascript', 'js'],
-        code: `const solapi = require('solapi').default;
+        code: `const {solapi} = require('solapi');
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
 async function sendAlimtalk() {
@@ -144,7 +144,7 @@ sendAlimtalk();`,
         description: '계정의 현재 잔액을 확인하는 예제입니다.',
         category: '계정관리',
         keywords: ['잔액', 'balance', '포인트', '확인', '조회', 'nodejs', 'javascript'],
-        code: `const solapi = require('solapi').default;
+        code: `const {solapi} = require('solapi');
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
 async function checkBalance() {
@@ -167,7 +167,7 @@ checkBalance();`,
         description: '발송한 메시지의 상태를 조회하는 예제입니다.',
         category: '상태조회',
         keywords: ['상태', '조회', '메시지', '발송', '결과', 'nodejs', 'javascript'],
-        code: `const solapi = require('solapi').default;
+        code: `const {solapi} = require('solapi');
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
 async function getMessageStatus() {
@@ -191,7 +191,7 @@ getMessageStatus();`,
         description: '특정 시간에 메시지를 발송하도록 예약하는 예제입니다.',
         category: '예약발송',
         keywords: ['예약', '발송', '스케줄', '시간', '지연', 'nodejs', 'javascript'],
-        code: `const solapi = require('solapi').default;
+        code: `const {solapi} = require('solapi');
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
 async function scheduleMessage() {
@@ -262,7 +262,7 @@ app.listen(3000, () => {
         description: 'SOLAPI 사용 시 발생할 수 있는 에러를 처리하는 예제입니다.',
         category: '에러처리',
         keywords: ['에러', '처리', '예외', '오류', '핸들링', 'nodejs', 'javascript'],
-        code: `const solapi = require('solapi').default;
+        code: `const {solapi} = require('solapi');
 const messageService = new solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
 
 async function sendWithErrorHandling() {
