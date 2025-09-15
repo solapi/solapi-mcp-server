@@ -221,12 +221,11 @@ function setupCursorConfig(): boolean {
       return false;
     }
 
-    const packageJson: PackageInfo = require('../../package.json');
     const serverName = 'solapi';
 
     config.mcpServers[serverName] = {
       command: 'npx',
-      args: ["-y", "@solapi/mcp-server"],
+      args: ["--latest", "-y", "@solapi/mcp-server"],
       env: {},
     };
 
