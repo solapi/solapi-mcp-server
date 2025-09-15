@@ -7,14 +7,14 @@ import { JavaExamplesLibrary } from '../data/javaExamples.js';
 import { PythonExamplesLibrary } from '../data/pythonExamples.js';
 import { GoExamplesLibrary } from '../data/goExamples.js';
 import { AspExamplesLibrary } from '../data/aspExamples.js';
-import { ExampleCache } from '../core/exampleCache.js';
+import { SdkCacheManager } from '../core/sdkCacheManager.js';
 import { WeightedSearchEngine } from '../search/weightedSearchEngine.js';
-import { SearchIndexManager } from '../search/searchIndexManager.js';
+import { SdkIndexManager } from '../search/sdkIndexManager.js';
 import { WebSearchTool } from './webSearchTool.js';
 import type { ToolDefinition, ExampleSearchArgs, ExampleDetailArgs, ToolResult, ISearchEngine, ICacheManager } from '../types';
 
-export const localSearchTool: ToolDefinition = {
-  name: 'search-local-sdk',
+export const InternalSearchTool: ToolDefinition = {
+  name: 'get-internal-doc',
   description: '로컬에 저장된 SOLAPI SDK 예제 코드와 문서를 검색합니다. 기본적으로 사용할 주요 검색 도구입니다. 코드 스니펫, 사용법, 카테고리별 검색이 가능합니다.',
   inputSchema: {
     type: 'object',
@@ -41,10 +41,10 @@ export const localSearchTool: ToolDefinition = {
 };
 
 // 캐시 인스턴스
-const cache = ExampleCache.getInstance();
+const cache = SdkCacheManager.getInstance();
 
 // 인덱스 매니저 인스턴스
-const indexManager = SearchIndexManager.getInstance();
+const indexManager = SdkIndexManager.getInstance();
 
 // 웹 검색 도구 인스턴스 (의존성 주입을 위해 나중에 설정)
 let webSearchTool: WebSearchTool | null = null;
@@ -285,8 +285,8 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
 /**
  * 예제 코드 상세 조회
  */
-export const exampleDetailTool: ToolDefinition = {
-  name: 'get-local-sdk-detail',
+export const getDetailTool: ToolDefinition = {
+  name: 'get-internal-doc-detail',
   description: '특정 로컬 예제 코드의 상세 정보를 조회합니다.',
   inputSchema: {
     type: 'object',

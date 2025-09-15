@@ -1,10 +1,11 @@
 /**
  * SOLAPI 문서 데이터 관리
+ * 역인덱스 생성시 사용됩니다.
  */
 import { NodejsExamplesLibrary } from '../data/nodejsExamples.js';
 import type { DocumentData, IDocumentDataManager } from '../types';
 
-export class DocumentDataManager {
+export class WebDocumentDataManager {
   /**
    * 문서 데이터 반환 (최적화된 구조)
    * @returns 문서 배열

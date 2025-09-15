@@ -4,7 +4,7 @@ import type { DocumentData, SearchResult, ISearchEngine } from '../types';
  * @class 검색 엔진
  * @description TF-IDF 알고리즘과 역 인덱스를 사용한 고성능 검색
  */
-export class OptimizedSearchEngine implements ISearchEngine {
+export class TfidfSearchEngine implements ISearchEngine {
   private documents: DocumentData[] = [];
   private invertedIndex: Map<string, Set<number>> = new Map(); // 인덱스 맵핑: 키워드 -> 문서
   private tfidfScores: Map<number, Map<string, number>> = new Map(); // TF-IDF 점수 캐싱

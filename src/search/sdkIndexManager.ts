@@ -12,8 +12,8 @@ export interface SearchIndex {
   descriptionIndex: Map<string, Set<string>>;
 }
 
-export class SearchIndexManager {
-  private static instance: SearchIndexManager;
+export class SdkIndexManager {
+  private static instance: SdkIndexManager;
   private index: SearchIndex;
   private examples: Map<string, Example> = new Map();
   private synonyms: Map<string, string[]> = new Map();
@@ -29,11 +29,11 @@ export class SearchIndexManager {
     this.initializeSynonyms();
   }
 
-  static getInstance(): SearchIndexManager {
-    if (!SearchIndexManager.instance) {
-      SearchIndexManager.instance = new SearchIndexManager();
+  static getInstance(): SdkIndexManager {
+    if (!SdkIndexManager.instance) {
+      SdkIndexManager.instance = new SdkIndexManager();
     }
-    return SearchIndexManager.instance;
+    return SdkIndexManager.instance;
   }
 
   /**

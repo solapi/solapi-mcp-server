@@ -1,6 +1,6 @@
 import { WebSearchTool } from './webSearchTool.js';
 import { OverviewTool } from './overviewTool.js';
-import { localSearchTool, handleLocalSearch, exampleDetailTool, handleExampleDetail, setWebSearchTool } from './localSearchTool.js';
+import { InternalSearchTool, handleLocalSearch, getDetailTool, handleExampleDetail, setWebSearchTool } from './internalSearchTool.js';
 import type { ISearchEngine, ICacheManager, ToolDefinition, ToolExecutor } from '../types';
 
 /**
@@ -24,13 +24,13 @@ export class ToolManager {
     setWebSearchTool(searchEngine, cache);
 
     // 로컬 검색 도구 (최우선 기본 도구)
-    this.tools.set('search-local-sdk', {
-      getDefinition: () => localSearchTool,
+    this.tools.set('get-internal-doc', {
+      getDefinition: () => InternalSearchTool,
       execute: handleLocalSearch
     });
 
-    this.tools.set('get-local-sdk-detail', {
-      getDefinition: () => exampleDetailTool,
+    this.tools.set('get-internal-doc-detail', {
+      getDefinition: () => getDetailTool,
       execute: handleExampleDetail
     });
     
@@ -38,7 +38,7 @@ export class ToolManager {
     
     
     // 웹 검색 도구
-    this.tools.set('search-solapi-doc', {
+    this.tools.set('get-solapi-doc', {
       getDefinition: () => {
         const webSearchTool = new WebSearchTool(searchEngine, cache);
         return webSearchTool.getDefinition();
