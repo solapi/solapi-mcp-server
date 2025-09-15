@@ -5,18 +5,18 @@ import {
   CallToolRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 
-import { CacheManager } from './cache.js';
-import { OptimizedSearchEngine } from '../search/searchEngine.js';
-import { DocumentDataManager } from '../search/documentData.js';
+import { CacheManager } from './cacheManager.js';
+import { TfidfSearchEngine } from '../search/tfidfSearchEngine.js';
+import { WebDocumentDataManager } from '../search/webDocumentDataManager.js';
 import { ToolManager } from '../tools/toolManager.js';
 import type { ServerConfig } from '../types';
 
 /**
  * @class 성능 최적화된 SOLAPI MCP 서버
  */
-export class OptimizedSolapiMcpServer {
+export class SolapiMcpServer {
   private server: Server;
-  private readonly searchEngine: OptimizedSearchEngine;
+  private readonly searchEngine: TfidfSearchEngine;
   private readonly cache: CacheManager;
   private toolManager: ToolManager;
   private isInitialized: boolean = false;
@@ -24,7 +24,7 @@ export class OptimizedSolapiMcpServer {
   constructor() {
     this.server = new Server(
       {
-        name: 'solapi-mcp-server-optimized',
+        name: 'solapi-mcp-server',
         version: '2.0.0',
       },
       {
@@ -34,7 +34,7 @@ export class OptimizedSolapiMcpServer {
       }
     );
 
-    this.searchEngine = new OptimizedSearchEngine();
+    this.searchEngine = new TfidfSearchEngine();
     this.cache = new CacheManager();
     this.toolManager = new ToolManager(this.searchEngine, this.cache);
 
@@ -70,10 +70,10 @@ export class OptimizedSolapiMcpServer {
     const startTime = Date.now();
     console.error('🚀 Initializing optimized search engine...');
 
-    const documents = DocumentDataManager.getDocuments();
+    const documents = WebDocumentDataManager.getDocuments();
 
     // 문서 검증
-    if (!DocumentDataManager.validateDocuments(documents)) {
+    if (!WebDocumentDataManager.validateDocuments(documents)) {
       throw new Error('Invalid document data structure');
     }
 
@@ -91,6 +91,6 @@ export class OptimizedSolapiMcpServer {
   async start(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error('🚀 Optimized SOLAPI MCP server started');
+    console.error('🚀 SOLAPI MCP server started');
   }
 }
