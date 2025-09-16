@@ -21,12 +21,12 @@ export const InternalSearchTool: ToolDefinition = {
     properties: {
       query: {
         type: 'string',
-        description: 'Keywords to search (e.g. SMS, 알림톡, TypeScript, Node.js, JavaScript, 에러처리, Java, Kotlin, Python)'
+        description: 'Keywords to search (e.g. SMS, 알림톡, Node.js, JavaScript, 에러처리, Java, Kotlin, Python)'
       },
       category: {
         type: 'string',
-        description: 'Category Filter (SMS, LMS, 알림톡, 계정관리, 상태조회, 예약발송, 웹훅, 에러처리, TypeScript, 초기설정, 파일업로드, MMS, 음성메시지, 대량발송, 템플릿관리, Kotlin)',
-        enum: ['SMS', 'LMS', '알림톡', '계정관리', '상태조회', '예약발송', '웹훅', '에러처리', 'TypeScript', '초기설정', '파일업로드', 'MMS', '음성메시지', '대량발송', '템플릿관리', 'Kotlin']
+        description: 'Category Filter (SMS, LMS, 알림톡, 계정관리, 상태조회, 예약발송, 웹훅, 에러처리, 초기설정, 파일업로드, MMS, 음성메시지, 대량발송, 템플릿관리, Kotlin)',
+        enum: ['SMS', 'LMS', '알림톡', '계정관리', '상태조회', '예약발송', '웹훅', '에러처리', '초기설정', '파일업로드', 'MMS', '음성메시지', '대량발송', '템플릿관리', 'Kotlin']
       },
       limit: {
         type: 'number',
@@ -60,9 +60,6 @@ export function setWebSearchTool(searchEngine: ISearchEngine, cacheManager: ICac
 }
 
 // 언어 감지 함수들
-const isTsExample = (example: any): boolean =>
-  (example.category && example.category.toLowerCase() === 'typescript') ||
-  (example.id && example.id.toLowerCase().includes('typescript'));
 
 const isJavaExample = (example: any): boolean => {
   // JavaScript 예제는 Java 예제가 아님을 명확히 구분
@@ -91,9 +88,6 @@ const isAspExample = (example: any): boolean =>
   (example.id && example.id.toLowerCase().includes('asp-'));
 
 const isJsExample = (example: any): boolean => {
-  // TypeScript 예제는 JavaScript 예제가 아님
-  if (isTsExample(example)) return false;
-  
   // Java 예제는 JavaScript 예제가 아님
   if (isJavaExample(example)) return false;
   
@@ -170,7 +164,7 @@ async function formatSearchResults(results: any[], query: string, limit: number)
     return {
       content: [{
         type: 'text',
-        text: `No examples found for "${query}".\n\nSuggestions:\n- Try searching by message types: SMS, LMS, 알림톡\n- Try searching by languages: Node.js, JavaScript, TypeScript, Java, Kotlin, Python\n- Try searching by features: error handling, webhook, status check\n- Available categories: ${uniqueCategories.join(', ')}`
+        text: `No examples found for "${query}".\n\nSuggestions:\n- Try searching by message types: SMS, LMS, 알림톡\n- Try searching by languages: Node.js, JavaScript, Java, Kotlin, Python\n- Try searching by features: error handling, webhook, status check\n- Available categories: ${uniqueCategories.join(', ')}`
       }]
     };
   }
@@ -178,9 +172,7 @@ async function formatSearchResults(results: any[], query: string, limit: number)
   // 결과 포맷팅
   const formattedResults = results.map((example: any) => {
     let language = 'javascript';
-    if (isTsExample(example)) {
-      language = 'typescript';
-    } else if (isJavaExample(example)) {
+    if (isJavaExample(example)) {
       if (example.keywords.some((k: string) => k.toLowerCase().includes('kotlin'))) {
         language = 'kotlin';
       } else {
@@ -235,7 +227,6 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
 
     // 언어 자동 추론 - 더 정확한 패턴 매칭
     const languageIntent = (() => {
-      if (/\b(ts|typescript)\b/.test(q)) return 'typescript';
       if (/\b(node\.js|nodejs|javascript|js)\b/.test(q)) return 'javascript';
       if (/\b(java|kotlin)\b/.test(q)) return 'java';
       if (/\b(python|py)\b/.test(q)) return 'python';
@@ -291,7 +282,7 @@ export const getDetailTool: ToolDefinition = {
     properties: {
       id: {
         type: 'string',
-        description: 'Example ID (e.g.: sms-send-basic, alimtalk-send, typescript-example)'
+        description: 'Example ID (e.g.: sms-send-basic, alimtalk-send, nodejs-example)'
       }
     },
     required: ['id']
@@ -342,12 +333,6 @@ export async function handleExampleDetail(args: Record<string, unknown>): Promis
       }
     }
     
-    // TypeScript 예제인지 확인 (Node.js 예제 중)
-    if (example && !language.includes('java') && language !== 'python' && language !== 'go' && language !== 'vbscript') {
-      if (example.category && example.category.toLowerCase() === 'typescript') {
-        language = 'typescript';
-      }
-    }
     
     if (!example) {
       const allExamples = [

@@ -2,7 +2,7 @@ import type {Example} from "../types";
 
 /**
  * SOLAPI Node.js SDK 예제 코드 라이브러리
- * @description Node.js/JavaScript/TypeScript용 실제 사용 가능한 코드 스니펫들을 내장하여 빠른 검색 제공
+ * @description Node.js/JavaScript용 실제 사용 가능한 코드 스니펫들을 내장하여 빠른 검색 제공
  */
 export class NodejsExamplesLibrary {
   /**
@@ -550,44 +550,6 @@ async function getStatistics() {
 
 getStatistics();`,
         usage: '메시지 발송 성과를 분석해야 하는 경우',
-        url: 'https://github.com/solapi/solapi-nodejs/tree/master/examples/javascript/common'
-      },
-      {
-        id: 'typescript-example',
-        title: 'TypeScript 사용 예제',
-        description: 'TypeScript로 SOLAPI를 사용하는 예제입니다.',
-        category: 'TypeScript',
-        keywords: ['typescript', 'ts', '타입', '인터페이스', '제네릭', 'nodejs', 'node.js', 'node', 'javascript', 'js'],
-        code: `import Solapi from 'solapi';
-
-type Message = {
-  to: string;
-  from: string;
-  text: string;
-  subject?: string;
-};
-
-async function sendManyTS() {
-  const client = new Solapi('YOUR_API_KEY', 'YOUR_API_SECRET');
-
-  const messages: Message[] = [
-    {
-      to: '01012345678',
-      from: '01087654321',
-      text: 'TypeScript로 발송된 메시지입니다.'
-    }
-  ];
-
-  try {
-    const result = await (client as any).sendMany(messages);
-    console.log('대량 발송 성공:', result);
-  } catch (error: any) {
-    console.error('발송 실패:', error.message);
-  }
-}
-
-sendManyTS();`,
-        usage: 'TypeScript 프로젝트에서 SOLAPI를를 사용하는 경우',
         url: 'https://github.com/solapi/solapi-nodejs/tree/master/examples/javascript/common'
       }
     ];

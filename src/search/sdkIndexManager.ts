@@ -93,8 +93,6 @@ export class SdkIndexManager {
     this.synonyms.set('node.js', ['nodejs', 'node', 'javascript', 'js', '자바스크립트']);
     this.synonyms.set('javascript', ['nodejs', 'node.js', 'node', 'js', '자바스크립트']);
     this.synonyms.set('js', ['nodejs', 'node.js', 'node', 'javascript', '자바스크립트']);
-    this.synonyms.set('typescript', ['ts', '타입스크립트']);
-    this.synonyms.set('ts', ['typescript', '타입스크립트']);
     this.synonyms.set('java', ['자바', '자바언어']);
     this.synonyms.set('python', ['파이썬', '파이선']);
     this.synonyms.set('go', ['golang', '고언어']);
@@ -165,9 +163,6 @@ export class SdkIndexManager {
    * 예제의 언어를 감지합니다.
    */
   private detectLanguage(example: Example): string {
-    if (example.category && example.category.toLowerCase() === 'typescript') {
-      return 'typescript';
-    }
     
     if (example.keywords.some(k => k.toLowerCase().includes('javascript') || 
                                    k.toLowerCase().includes('nodejs') || 
