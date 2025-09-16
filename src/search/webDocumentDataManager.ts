@@ -71,12 +71,12 @@ export class WebDocumentDataManager {
       {
         id: 'nodejs-sdk',
         title: 'Node.js SDK',
-        content: 'npm을 통한 설치 방법과 다양한 예제 코드를 제공합니다. 메시지 발송, 잔액 조회, 예약 발송 등의 기능을 지원하며 Promise와 async/await 패턴을 모두 사용할 수 있습니다. TypeScript도 지원합니다.',
+        content: 'npm을 통한 설치 방법과 다양한 예제 코드를 제공합니다. 메시지 발송, 잔액 조회, 예약 발송 등의 기능을 지원하며 Promise와 async/await 패턴을 모두 사용할 수 있습니다.',
         url: 'https://developers.solapi.com/category/nodejs',
         category: 'sdk',
-        tags: ['nodejs', 'node', 'sdk', 'npm', 'javascript', 'promise', 'async', 'typescript'],
+        tags: ['nodejs', 'node', 'sdk', 'npm', 'javascript', 'promise', 'async'],
         metadata: {
-          keywords: ['nodejs', 'node', 'sdk', 'npm', 'javascript', 'promise', 'async', 'typescript']
+          keywords: ['nodejs', 'node', 'sdk', 'npm', 'javascript', 'promise', 'async']
         }
       },
       {

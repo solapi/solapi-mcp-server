@@ -121,7 +121,7 @@ export class OverviewTool implements Tool {
       sdk: `# ⚡ SOLAPI SDK
 
 ## 지원 언어
-- **Node.js**: npm 패키지, TypeScript 지원
+- **Node.js**: npm 패키지, JavaScript 지원
 - **Java**: Maven/Gradle 지원
 - **PHP**: Composer 패키지
 - **Python**: pip 패키지
