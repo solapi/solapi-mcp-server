@@ -2,42 +2,68 @@
  * @file SOLAPI 로컬 검색 도구
  * @description 로컬에 저장된 예제 코드 및 문서를 빠르게 검색
  */
-import { NodejsExamplesLibrary } from '../data/nodejsExamples.js';
-import { JavaExamplesLibrary } from '../data/javaExamples.js';
-import { PythonExamplesLibrary } from '../data/pythonExamples.js';
-import { GoExamplesLibrary } from '../data/goExamples.js';
-import { AspExamplesLibrary } from '../data/aspExamples.js';
-import { SdkCacheManager } from '../core/sdkCacheManager.js';
-import { WeightedSearchEngine } from '../search/weightedSearchEngine.js';
-import { SdkIndexManager } from '../search/sdkIndexManager.js';
-import { WebSearchTool } from './webSearchTool.js';
-import type { ToolDefinition, ExampleSearchArgs, ExampleDetailArgs, ToolResult, ISearchEngine, ICacheManager } from '../types';
+import { NodejsExamplesLibrary } from "../data/nodejsExamples.js";
+import { JavaExamplesLibrary } from "../data/javaExamples.js";
+import { PythonExamplesLibrary } from "../data/pythonExamples.js";
+import { GoExamplesLibrary } from "../data/goExamples.js";
+import { AspExamplesLibrary } from "../data/aspExamples.js";
+import { SdkCacheManager } from "../core/sdkCacheManager.js";
+import { WeightedSearchEngine } from "../search/weightedSearchEngine.js";
+import { SdkIndexManager } from "../search/sdkIndexManager.js";
+import { WebSearchTool } from "./webSearchTool.js";
+import type {
+  ToolDefinition,
+  ExampleSearchArgs,
+  ExampleDetailArgs,
+  ToolResult,
+  ISearchEngine,
+  ICacheManager,
+} from "../types";
 
 export const InternalSearchTool: ToolDefinition = {
-  name: 'get-internal-doc',
-  description: 'Search locally stored SOLAPI SDK example code and documentation. This is the primary search tool you\'ll use by default. You can search by code snippet, usage, and category. When adding a new dependency to package.json, always use latest or omit the version entirely.',
+  name: "get-internal-doc",
+  description:
+    "Search locally stored SOLAPI SDK example code and documentation. This is the primary search tool you'll use by default. You can search by code snippet, usage, and category. When adding a new dependency to package.json, always use latest or omit the version entirely.",
   inputSchema: {
-    type: 'object',
+    type: "object",
     properties: {
       query: {
-        type: 'string',
-        description: 'Keywords to search (e.g. SMS, 알림톡, Node.js, JavaScript, 에러처리, Java, Kotlin, Python)'
+        type: "string",
+        description:
+          "Keywords to search (e.g. SMS, 알림톡, Node.js, JavaScript, 에러처리, Java, Kotlin, Python)",
       },
       category: {
-        type: 'string',
-        description: 'Category Filter (SMS, LMS, 알림톡, 계정관리, 상태조회, 예약발송, 웹훅, 에러처리, 초기설정, 파일업로드, MMS, 음성메시지, 대량발송, 템플릿관리, Kotlin)',
-        enum: ['SMS', 'LMS', '알림톡', '계정관리', '상태조회', '예약발송', '웹훅', '에러처리', '초기설정', '파일업로드', 'MMS', '음성메시지', '대량발송', '템플릿관리', 'Kotlin']
+        type: "string",
+        description:
+          "Category Filter (SMS, LMS, 알림톡, 계정관리, 상태조회, 예약발송, 웹훅, 에러처리, 초기설정, 파일업로드, MMS, 음성메시지, 대량발송, 템플릿관리, Kotlin)",
+        enum: [
+          "SMS",
+          "LMS",
+          "알림톡",
+          "계정관리",
+          "상태조회",
+          "예약발송",
+          "웹훅",
+          "에러처리",
+          "초기설정",
+          "파일업로드",
+          "MMS",
+          "음성메시지",
+          "대량발송",
+          "템플릿관리",
+          "Kotlin",
+        ],
       },
       limit: {
-        type: 'number',
-        description: 'Limit number of search results (default: 5, maximum: 10)',
+        type: "number",
+        description: "Limit number of search results (default: 5, maximum: 10)",
         minimum: 1,
         maximum: 10,
-        default: 5
-      }
+        default: 5,
+      },
     },
-    required: ['query']
-  }
+    required: ["query"],
+  },
 };
 
 // 캐시 인스턴스
@@ -55,7 +81,10 @@ let webSearchTool: WebSearchTool | null = null;
 /**
  * 웹 검색 도구를 설정합니다.
  */
-export function setWebSearchTool(searchEngine: ISearchEngine, cacheManager: ICacheManager): void {
+export function setWebSearchTool(
+  searchEngine: ISearchEngine,
+  cacheManager: ICacheManager
+): void {
   webSearchTool = new WebSearchTool(searchEngine, cacheManager);
 }
 
@@ -63,45 +92,71 @@ export function setWebSearchTool(searchEngine: ISearchEngine, cacheManager: ICac
 
 const isJavaExample = (example: any): boolean => {
   // JavaScript 예제는 Java 예제가 아님을 명확히 구분
-  if (example.keywords && example.keywords.some((k: string) => 
-    k.toLowerCase().includes('javascript') || 
-    k.toLowerCase().includes('nodejs') || 
-    k.toLowerCase().includes('js') ||
-    k.toLowerCase().includes('node'))) {
+  if (
+    example.keywords &&
+    example.keywords.some(
+      (k: string) =>
+        k.toLowerCase().includes("javascript") ||
+        k.toLowerCase().includes("nodejs") ||
+        k.toLowerCase().includes("js") ||
+        k.toLowerCase().includes("node")
+    )
+  ) {
     return false;
   }
-  return (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('java') || k.toLowerCase().includes('kotlin'))) ||
-    (example.id && example.id.toLowerCase().includes('java')) ||
-    (example.id && example.id.toLowerCase().includes('kotlin'));
+  return (
+    (example.keywords &&
+      example.keywords.some(
+        (k: string) =>
+          k.toLowerCase().includes("java") || k.toLowerCase().includes("kotlin")
+      )) ||
+    (example.id && example.id.toLowerCase().includes("java")) ||
+    (example.id && example.id.toLowerCase().includes("kotlin"))
+  );
 };
 
 const isPythonExample = (example: any): boolean =>
-  (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('python'))) ||
-  (example.id && example.id.toLowerCase().includes('python'));
+  (example.keywords &&
+    example.keywords.some((k: string) => k.toLowerCase().includes("python"))) ||
+  (example.id && example.id.toLowerCase().includes("python"));
 
 const isGoExample = (example: any): boolean =>
-  (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('go') || k.toLowerCase().includes('golang'))) ||
-  (example.id && example.id.toLowerCase().includes('go'));
+  (example.keywords &&
+    example.keywords.some(
+      (k: string) =>
+        k.toLowerCase().includes("go") || k.toLowerCase().includes("golang")
+    )) ||
+  (example.id && example.id.toLowerCase().includes("go"));
 
 const isAspExample = (example: any): boolean =>
-  (example.keywords && example.keywords.some((k: string) => k.toLowerCase().includes('asp') || k.toLowerCase().includes('vbscript'))) ||
-  (example.id && example.id.toLowerCase().includes('asp-'));
+  (example.keywords &&
+    example.keywords.some(
+      (k: string) =>
+        k.toLowerCase().includes("asp") || k.toLowerCase().includes("vbscript")
+    )) ||
+  (example.id && example.id.toLowerCase().includes("asp-"));
 
 const isJsExample = (example: any): boolean => {
   // Java 예제는 JavaScript 예제가 아님
   if (isJavaExample(example)) return false;
-  
+
   // Python, Go, ASP 예제는 JavaScript 예제가 아님
-  if (isPythonExample(example) || isGoExample(example) || isAspExample(example)) return false;
-  
+  if (isPythonExample(example) || isGoExample(example) || isAspExample(example))
+    return false;
+
   // Node.js 예제는 JavaScript 예제임
-  return (example.keywords && example.keywords.some((k: string) => 
-    k.toLowerCase().includes('javascript') || 
-    k.toLowerCase().includes('nodejs') || 
-    k.toLowerCase().includes('js') ||
-    k.toLowerCase().includes('node'))) ||
-    (example.id && example.id.toLowerCase().includes('nodejs')) ||
-    (example.id && example.id.toLowerCase().includes('javascript'));
+  return (
+    (example.keywords &&
+      example.keywords.some(
+        (k: string) =>
+          k.toLowerCase().includes("javascript") ||
+          k.toLowerCase().includes("nodejs") ||
+          k.toLowerCase().includes("js") ||
+          k.toLowerCase().includes("node")
+      )) ||
+    (example.id && example.id.toLowerCase().includes("nodejs")) ||
+    (example.id && example.id.toLowerCase().includes("javascript"))
+  );
 };
 
 /**
@@ -114,40 +169,56 @@ function initializeCache(): void {
   const pythonExamples = PythonExamplesLibrary.getExamples();
   const goExamples = GoExamplesLibrary.getExamples();
   const aspExamples = AspExamplesLibrary.getExamples();
-  
-  cache.setLibraryCache('nodejs', nodeExamples);
-  cache.setLibraryCache('java', javaExamples);
-  cache.setLibraryCache('python', pythonExamples);
-  cache.setLibraryCache('go', goExamples);
-  cache.setLibraryCache('asp', aspExamples);
+
+  cache.setLibraryCache("nodejs", nodeExamples);
+  cache.setLibraryCache("java", javaExamples);
+  cache.setLibraryCache("python", pythonExamples);
+  cache.setLibraryCache("go", goExamples);
+  cache.setLibraryCache("asp", aspExamples);
 
   // 모든 예제를 합쳐서 인덱스 구축
-  const allExamples = [...nodeExamples, ...javaExamples, ...pythonExamples, ...goExamples, ...aspExamples];
+  const allExamples = [
+    ...nodeExamples,
+    ...javaExamples,
+    ...pythonExamples,
+    ...goExamples,
+    ...aspExamples,
+  ];
   indexManager.buildIndex(allExamples);
 }
 
 /**
  * 검색 결과를 포맷팅하여 반환합니다. 결과가 없으면 웹 검색을 시도합니다.
  */
-async function formatSearchResults(results: any[], query: string, limit: number): Promise<ToolResult> {
+async function formatSearchResults(
+  results: any[],
+  query: string,
+  limit: number
+): Promise<ToolResult> {
   if (results.length === 0) {
     // 로컬 검색 결과가 없으면 웹 검색 시도
     if (webSearchTool) {
       try {
         console.warn(`로컬 검색 결과 없음. 웹 검색 시도: "${query}"`);
         const webResult = await webSearchTool.execute({ query, limit });
-        
+
         // 웹 검색 결과가 있으면 반환
-        if (webResult.content && webResult.content.length > 0 && webResult.content[0]) {
+        if (
+          webResult.content &&
+          webResult.content.length > 0 &&
+          webResult.content[0]
+        ) {
           return {
-            content: [{
-              type: 'text',
-              text: `Web search results for "${query}":\n\n${webResult.content[0].text}`
-            }]
+            content: [
+              {
+                type: "text",
+                text: `Web search results for "${query}":\n\n${webResult.content[0].text}`,
+              },
+            ],
           };
         }
       } catch (error) {
-        console.error('웹 검색 실패:', error);
+        console.error("웹 검색 실패:", error);
       }
     }
 
@@ -157,35 +228,41 @@ async function formatSearchResults(results: any[], query: string, limit: number)
       ...JavaExamplesLibrary.getCategories(),
       ...PythonExamplesLibrary.getCategories(),
       ...GoExamplesLibrary.getCategories(),
-      ...AspExamplesLibrary.getCategories()
+      ...AspExamplesLibrary.getCategories(),
     ];
     const uniqueCategories = [...new Set(allCategories)];
-    
+
     return {
-      content: [{
-        type: 'text',
-        text: `No examples found for "${query}".\n\nSuggestions:\n- Try searching by message types: SMS, LMS, 알림톡\n- Try searching by languages: Node.js, JavaScript, Java, Kotlin, Python\n- Try searching by features: error handling, webhook, status check\n- Available categories: ${uniqueCategories.join(', ')}`
-      }]
+      content: [
+        {
+          type: "text",
+          text: `No examples found for "${query}".\n\nSuggestions:\n- Try searching by message types: SMS, LMS, 알림톡\n- Try searching by languages: Node.js, JavaScript, Java, Kotlin, Python\n- Try searching by features: error handling, webhook, status check\n- Available categories: ${uniqueCategories.join(
+            ", "
+          )}`,
+        },
+      ],
     };
   }
 
   // 결과 포맷팅
   const formattedResults = results.map((example: any) => {
-    let language = 'javascript';
+    let language = "javascript";
     if (isJavaExample(example)) {
-      if (example.keywords.some((k: string) => k.toLowerCase().includes('kotlin'))) {
-        language = 'kotlin';
+      if (
+        example.keywords.some((k: string) => k.toLowerCase().includes("kotlin"))
+      ) {
+        language = "kotlin";
       } else {
-        language = 'java';
+        language = "java";
       }
     } else if (isPythonExample(example)) {
-      language = 'python';
+      language = "python";
     } else if (isGoExample(example)) {
-      language = 'go';
+      language = "go";
     } else if (isAspExample(example)) {
-      language = 'vbscript';
+      language = "vbscript";
     } else if (isJsExample(example)) {
-      language = 'javascript';
+      language = "javascript";
     }
 
     return {
@@ -196,49 +273,62 @@ async function formatSearchResults(results: any[], query: string, limit: number)
       language: language,
       usage: example.usage,
       keywords: example.keywords,
-      codePreview: example.code.substring(0, 200) + (example.code.length > 200 ? '...' : ''),
+      codePreview:
+        example.code.substring(0, 200) +
+        (example.code.length > 200 ? "..." : ""),
       fullCode: example.code,
-      url: example.url
+      url: example.url,
     };
   });
 
   return {
-    content: [{
-      type: 'text',
-      text: `Found ${results.length} examples for "${query}":\n\n${formattedResults.map((result: any) => 
-        `## ${result.title}\n**Category**: ${result.category}\n**Language**: ${result.language}\n**Usage**: ${result.usage}\n\n**Code Preview**:\n\`\`\`${result.language}\n${result.codePreview}\n\`\`\`\n\n**Full Code**:\n\`\`\`${result.language}\n${result.fullCode}\n\`\`\`\n\n **URL**: ${result.url}\n`
-      ).join('\n---\n\n')}\n\n🚨 **IMPORTANT**: When adding dependencies to package.json, always use "latest" or omit version entirely. Example: "express": "latest" NOT "express": "^4.18.0"`
-    }]
+    content: [
+      {
+        type: "text",
+        text: `Found ${
+          results.length
+        } examples for "${query}":\n\n${formattedResults
+          .map(
+            (result: any) =>
+              `## ${result.title}\n**Category**: ${result.category}\n**Language**: ${result.language}\n**Usage**: ${result.usage}\n\n**Code Preview**:\n\`\`\`${result.language}\n${result.codePreview}\n\`\`\`\n\n**Full Code**:\n\`\`\`${result.language}\n${result.fullCode}\n\`\`\`\n\n **URL**: ${result.url}\n`
+          )
+          .join(
+            "\n---\n\n"
+          )}\n\n🚨 **IMPORTANT**: When adding dependencies to package.json, always use "latest" or omit version entirely. Example: "express": "latest" NOT "express": "^4.18.0"\n\n **TypeScript 사용자 안내**: Node.js 환경은 현재 JavaScript 예제만 제공합니다.`,
+      },
+    ],
   };
 }
 
-export async function handleLocalSearch(args: Record<string, unknown>): Promise<ToolResult> {
+export async function handleLocalSearch(
+  args: Record<string, unknown>
+): Promise<ToolResult> {
   const { query, category, limit = 5 } = args as unknown as ExampleSearchArgs;
   try {
-
-    const cacheKey = `${query}-${category || 'all'}-${limit}`;
+    const cacheKey = `${query}-${category || "all"}-${limit}`;
     const cachedResults = cache.getSearchCache(cacheKey);
     if (cachedResults) {
       return await formatSearchResults(cachedResults, query, limit);
     }
 
-    let results: any[]
-    const q = (query || '').toLowerCase();
+    let results: any[];
+    const q = (query || "").toLowerCase();
 
     // 언어 자동 추론 - 더 정확한 패턴 매칭
     const languageIntent = (() => {
-      if (/\b(node\.js|nodejs|javascript|js)\b/.test(q)) return 'javascript';
-      if (/\b(java|kotlin)\b/.test(q)) return 'java';
-      if (/\b(python|py)\b/.test(q)) return 'python';
-      if (/\b(go|golang)\b/.test(q)) return 'go';
-      if (/\b(asp|vbscript|classic\s*asp)\b/.test(q)) return 'asp';
+      if (/\b(node\.js|nodejs|javascript|js|typescript|ts)\b/.test(q))
+        return "javascript";
+      if (/\b(java|kotlin)\b/.test(q)) return "java";
+      if (/\b(python|py)\b/.test(q)) return "python";
+      if (/\b(go|golang)\b/.test(q)) return "go";
+      if (/\b(asp|vbscript|classic\s*asp)\b/.test(q)) return "asp";
       return null;
     })();
 
     // 인덱스 기반 빠른 검색 수행
     const searchResultIds = indexManager.searchComplex(
-      query as string, 
-      category, 
+      query as string,
+      category,
       languageIntent || undefined
     );
 
@@ -246,27 +336,37 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
     const searchResults = indexManager.getExamplesByIds(searchResultIds);
 
     // 가중치 기반 점수 계산 및 정렬
-    const scoredResults = WeightedSearchEngine.sortByScore(searchResults, query as string);
-    
+    const scoredResults = WeightedSearchEngine.sortByScore(
+      searchResults,
+      query as string
+    );
+
     // 관련성 있는 결과만 필터링하고 제한
-    const relevantResults = WeightedSearchEngine.filterRelevantResults(scoredResults);
-    const limitedResults = WeightedSearchEngine.limitResults(relevantResults, limit as number);
-    
+    const relevantResults =
+      WeightedSearchEngine.filterRelevantResults(scoredResults);
+    const limitedResults = WeightedSearchEngine.limitResults(
+      relevantResults,
+      limit as number
+    );
+
     // 결과를 Example 형태로 변환
-    results = limitedResults.map(scoredResult => scoredResult.example);
+    results = limitedResults.map((scoredResult) => scoredResult.example);
 
     // 검색 결과를 캐시에 저장
     cache.setSearchCache(cacheKey, results);
 
     return await formatSearchResults(results, query, limit);
-
   } catch (error) {
     return {
-      content: [{
-        type: 'text',
-        text: `Error occurred while searching examples: ${(error as Error).message}`
-      }],
-      isError: true
+      content: [
+        {
+          type: "text",
+          text: `Error occurred while searching examples: ${
+            (error as Error).message
+          }`,
+        },
+      ],
+      isError: true,
     };
   }
 }
@@ -275,45 +375,53 @@ export async function handleLocalSearch(args: Record<string, unknown>): Promise<
  * 예제 코드 상세 조회
  */
 export const getDetailTool: ToolDefinition = {
-  name: 'get-internal-doc-detail',
-  description: 'View details of a specific local example code. When adding a new dependency to package.json, always use latest or omit the version entirely.',
+  name: "get-internal-doc-detail",
+  description:
+    "View details of a specific local example code. When adding a new dependency to package.json, always use latest or omit the version entirely.",
   inputSchema: {
-    type: 'object',
+    type: "object",
     properties: {
       id: {
-        type: 'string',
-        description: 'Example ID (e.g.: sms-send-basic, alimtalk-send, nodejs-example)'
-      }
+        type: "string",
+        description:
+          "Example ID (e.g.: sms-send-basic, alimtalk-send, nodejs-example)",
+      },
     },
-    required: ['id']
-  }
+    required: ["id"],
+  },
 };
 
-export async function handleExampleDetail(args: Record<string, unknown>): Promise<ToolResult> {
+export async function handleExampleDetail(
+  args: Record<string, unknown>
+): Promise<ToolResult> {
   const { id } = args as unknown as ExampleDetailArgs;
   try {
     // 먼저 Node.js 예제에서 찾기
     let example = NodejsExamplesLibrary.getExampleById(id);
-    let language = 'javascript';
-    
+    let language = "javascript";
+
     // Node.js 예제에서 찾지 못한 경우 Java 예제에서 찾기
     if (!example) {
       example = JavaExamplesLibrary.getExampleById(id);
       if (example) {
         // Java 예제인지 Kotlin 예제인지 판단
-        if (example.keywords.some((k: string) => k.toLowerCase().includes('kotlin'))) {
-          language = 'kotlin';
+        if (
+          example.keywords.some((k: string) =>
+            k.toLowerCase().includes("kotlin")
+          )
+        ) {
+          language = "kotlin";
         } else {
-          language = 'java';
+          language = "java";
         }
       }
     }
-    
+
     // Java 예제에서도 찾지 못한 경우 Python 예제에서 찾기
     if (!example) {
       example = PythonExamplesLibrary.getExampleById(id);
       if (example) {
-        language = 'python';
+        language = "python";
       }
     }
 
@@ -321,7 +429,7 @@ export async function handleExampleDetail(args: Record<string, unknown>): Promis
     if (!example) {
       example = GoExamplesLibrary.getExampleById(id);
       if (example) {
-        language = 'go';
+        language = "go";
       }
     }
 
@@ -329,43 +437,59 @@ export async function handleExampleDetail(args: Record<string, unknown>): Promis
     if (!example) {
       example = AspExamplesLibrary.getExampleById(id);
       if (example) {
-        language = 'vbscript';
+        language = "vbscript";
       }
     }
-    
-    
+
     if (!example) {
       const allExamples = [
         ...NodejsExamplesLibrary.getExamples(),
         ...JavaExamplesLibrary.getExamples(),
         ...PythonExamplesLibrary.getExamples(),
         ...GoExamplesLibrary.getExamples(),
-        ...AspExamplesLibrary.getExamples()
+        ...AspExamplesLibrary.getExamples(),
       ];
       return {
-        content: [{
-          type: 'text',
-          text: `Example ID "${id}" not found.\n\nAvailable examples:\n${allExamples.map((e: any) => 
-            `- **${e.id}**: ${e.title} (${e.category})`
-          ).join('\n')}`
-        }]
+        content: [
+          {
+            type: "text",
+            text: `Example ID "${id}" not found.\n\nAvailable examples:\n${allExamples
+              .map((e: any) => `- **${e.id}**: ${e.title} (${e.category})`)
+              .join("\n")}`,
+          },
+        ],
       };
     }
 
     return {
-      content: [{
-        type: 'text',
-        text: `## ${example.title}\n\n**Description**: ${example.description}\n**Category**: ${example.category}\n**Usage**: ${example.usage}\n\n**Keywords**: ${example.keywords.join(', ')}\n\n**Code**:\n\`\`\`${language}\n${example.code}\n\`\`\`\n\n**URL**: ${example.url}\n\n🚨 **IMPORTANT**: When adding dependencies to package.json, always use "latest" or omit version entirely. Example: "express": "latest" NOT "express": "^4.18.0"`
-      }]
+      content: [
+        {
+          type: "text",
+          text: `## ${example.title}\n\n**Description**: ${
+            example.description
+          }\n**Category**: ${example.category}\n**Usage**: ${
+            example.usage
+          }\n\n**Keywords**: ${example.keywords.join(
+            ", "
+          )}\n\n**Code**:\n\`\`\`${language}\n${
+            example.code
+          }\n\`\`\`\n\n**URL**: ${
+            example.url
+          }\n\n🚨 **IMPORTANT**: When adding dependencies to package.json, always use "latest" or omit version entirely. Example: "express": "latest" NOT "express": "^4.18.0"\n\n **TypeScript 사용자 안내**: Node.js 환경은 현재 JavaScript 예제만 제공합니다.`,
+        },
+      ],
     };
-
   } catch (error) {
     return {
-      content: [{
-        type: 'text',
-        text: `Error occurred while retrieving example details: ${(error as Error).message}`
-      }],
-      isError: true
+      content: [
+        {
+          type: "text",
+          text: `Error occurred while retrieving example details: ${
+            (error as Error).message
+          }`,
+        },
+      ],
+      isError: true,
     };
   }
 }
