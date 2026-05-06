@@ -11,6 +11,12 @@ import { ManifestStore } from './manifestLoader.js';
 import { TfidfSearchEngine } from '../search/tfidfSearchEngine.js';
 import { WebDocumentDataManager } from '../search/webDocumentDataManager.js';
 import { ToolManager } from '../tools/toolManager.js';
+import { ensureInstalled, isInstalled, SOLACTL_VERSION, upgradeSolactl } from '../installers/solactlInstaller.js';
+
+function parseAutoUpgrade(raw: string | undefined): boolean {
+  if (!raw) return false;
+  return ['1', 'true', 'yes', 'on'].includes(raw.toLowerCase());
+}
 
 export class SolapiMcpServer {
   private server: Server;
@@ -64,6 +70,31 @@ export class SolapiMcpServer {
       throw new Error('Invalid web document data');
     }
     this.searchEngine.addDocuments(documents);
+
+    if (!isInstalled()) {
+      try {
+        await ensureInstalled();
+      } catch (err) {
+        console.error(
+          `⚠️  solactl ${SOLACTL_VERSION} 자동 설치 실패: ${(err as Error).message}. ` +
+            `발송/조회 도구 호출 시 다시 시도합니다.`,
+        );
+      }
+    }
+
+    if (parseAutoUpgrade(process.env.SOLAPI_MCP_AUTO_UPGRADE)) {
+      try {
+        const result = await upgradeSolactl({ logger: (msg) => console.error(msg) });
+        if (result.changed) {
+          console.error(`⬆️  solactl ${result.fromVersion ?? '(미설치)'} → ${result.toVersion}로 업그레이드되었습니다.`);
+        }
+      } catch (err) {
+        console.error(
+          `⚠️  solactl 자동 업그레이드 실패: ${(err as Error).message}. ` +
+            `현재 설치된 버전을 그대로 사용합니다.`,
+        );
+      }
+    }
 
     const ms = Date.now() - start;
     console.error(

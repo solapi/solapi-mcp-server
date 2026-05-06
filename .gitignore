@@ -2,6 +2,9 @@
 dist
 *.tsbuildinfo
 
+# postinstall이 다운로드하는 solactl 바이너리
+bin/
+
 # Node.js
 node_modules/
 npm-debug.log*

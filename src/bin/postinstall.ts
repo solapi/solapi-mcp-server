@@ -20,6 +20,8 @@ interface McpConfig {
   }>;
 }
 
+import { downloadIfMissing, isInstalled, SOLACTL_VERSION } from '../installers/solactlInstaller.js';
+
 // ES6 모듈에서 __dirname 대체
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,6 +30,23 @@ const __dirname = path.dirname(__filename);
 const require = createRequire(import.meta.url);
 
 console.log('🚀 Setting up SOLAPI MCP server...');
+
+/**
+ * solactl 바이너리를 다운로드하여 패키지 bin 디렉토리에 설치한다.
+ * 실패해도 throw하지 않는다 — 첫 MCP 부팅 시 lazy fallback으로 재시도한다.
+ */
+async function setupSolactl(): Promise<void> {
+  if (isInstalled()) {
+    console.log(`✅ solactl ${SOLACTL_VERSION} already installed`);
+    return;
+  }
+  try {
+    await downloadIfMissing({ logger: (msg) => console.log(msg) });
+  } catch (err) {
+    console.warn(`⚠️  solactl 자동 설치 실패: ${(err as Error).message}`);
+    console.warn('   첫 MCP 서버 실행 시 다시 시도합니다.');
+  }
+}
 
 /**
  * 클로드 MCP 설정 경로를 반환하는 함수
@@ -275,7 +294,9 @@ function showManualInstructions(): void {
 /**
  * 메인 실행 함수
  */
-function main(): void {
+async function main(): Promise<void> {
+  await setupSolactl();
+
   const claudeSuccess = setupClaudeConfig();
   const cursorSuccess = setupCursorConfig();
 
@@ -290,4 +311,6 @@ function main(): void {
   }
 }
 
-main();
+main().catch((err) => {
+  console.error('postinstall failed:', err);
+});
