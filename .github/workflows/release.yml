@@ -31,6 +31,11 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Sync SDK examples manifest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run sync
+
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

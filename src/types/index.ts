@@ -88,41 +88,7 @@ export interface SearchArgs {
   limit?: number;
 }
 
-// 예제 검색 인수 타입
-export interface ExampleSearchArgs {
-  query: string;
-  category?: string;
-  limit?: number;
-}
-
-// 예제 상세 조회 인수 타입
-export interface ExampleDetailArgs {
-  id: string;
-}
-
-// 성능 테스트 인수 타입
-export interface PerformanceTestArgs {
-  iterations?: number;
-  query?: string;
-}
-
-// 메모리 분석 인수 타입
-export interface MemoryAnalysisArgs {
-  includeDetails?: boolean;
-}
-
 // 개요 조회 인수 타입
 export interface OverviewArgs {
   category?: string;
-}
-
-export interface Example {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  keywords: string[];
-  code: string;
-  usage: string;
-  url: string;
 }
