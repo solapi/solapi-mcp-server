@@ -1,93 +1,77 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
-  ListToolsRequestSchema,
   CallToolRequestSchema,
+  ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 
 import { CacheManager } from './cacheManager.js';
+import { ExampleFetcher } from './exampleFetcher.js';
+import { ManifestStore } from './manifestLoader.js';
 import { TfidfSearchEngine } from '../search/tfidfSearchEngine.js';
 import { WebDocumentDataManager } from '../search/webDocumentDataManager.js';
 import { ToolManager } from '../tools/toolManager.js';
-import type { ServerConfig } from '../types';
 
-/**
- * @class 성능 최적화된 SOLAPI MCP 서버
- */
 export class SolapiMcpServer {
   private server: Server;
-  private readonly searchEngine: TfidfSearchEngine;
   private readonly cache: CacheManager;
+  private readonly searchEngine: TfidfSearchEngine;
+  private readonly manifest: ManifestStore;
+  private readonly fetcher: ExampleFetcher;
   private toolManager: ToolManager;
-  private isInitialized: boolean = false;
+  private isInitialized = false;
 
   constructor() {
     this.server = new Server(
-      {
-        name: 'solapi-mcp-server',
-        version: '2.0.0',
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      }
+      { name: 'solapi-mcp-server', version: '2.0.0' },
+      { capabilities: { tools: {} } },
     );
 
-    this.searchEngine = new TfidfSearchEngine();
     this.cache = new CacheManager();
-    this.toolManager = new ToolManager(this.searchEngine, this.cache);
+    this.searchEngine = new TfidfSearchEngine();
+    this.manifest = new ManifestStore();
+    this.fetcher = new ExampleFetcher(this.cache);
+    this.toolManager = new ToolManager({
+      cache: this.cache,
+      searchEngine: this.searchEngine,
+      manifest: this.manifest,
+      fetcher: this.fetcher,
+    });
 
     this.setupRequestHandlers();
   }
 
-  /**
-   * 요청 핸들러 설정
-   */
   private setupRequestHandlers(): void {
-    // 도구 목록 반환
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: this.toolManager.getToolDefinitions()
-      };
-    });
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
+      tools: this.toolManager.getToolDefinitions(),
+    }));
 
-    // 도구 실행
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args = {} } = request.params;
       await this.initialize();
       const result = await this.toolManager.executeTool(name, args);
-      return result as any;
+      return result as never;
     });
   }
 
-  /**
-   * 서비스 초기화를 수행하는 지연 로딩 메서드
-   */
   private async initialize(): Promise<void> {
     if (this.isInitialized) return;
+    const start = Date.now();
 
-    const startTime = Date.now();
-    console.error('🚀 Initializing optimized search engine...');
-
+    this.manifest.load();
     const documents = WebDocumentDataManager.getDocuments();
-
-    // 문서 검증
     if (!WebDocumentDataManager.validateDocuments(documents)) {
-      throw new Error('Invalid document data structure');
+      throw new Error('Invalid web document data');
     }
-
     this.searchEngine.addDocuments(documents);
 
-    const initTime = Date.now() - startTime;
-    console.error(`Search engine initialized in ${initTime}ms with ${documents.length} documents`);
-
+    const ms = Date.now() - start;
+    console.error(
+      `🚀 Initialized: ${this.manifest.size()} SDK examples + ${documents.length} web docs (${ms}ms)`,
+    );
     this.isInitialized = true;
   }
 
-  /**
-   * MCP 서버 시작
-   */
   async start(): Promise<void> {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);

@@ -1,17 +1,7 @@
-/**
- * SOLAPI 문서 데이터 관리
- * 역인덱스 생성시 사용됩니다.
- */
-import { NodejsExamplesLibrary } from '../data/nodejsExamples.js';
-import type { DocumentData, IDocumentDataManager } from '../types';
+import type { DocumentData } from '../types/index.js';
 
 export class WebDocumentDataManager {
-  /**
-   * 문서 데이터 반환 (최적화된 구조)
-   * @returns 문서 배열
-   */
   static getDocuments(): DocumentData[] {
-    // 기본 문서 데이터
     const basicDocs: DocumentData[] = [
       {
         id: 'auth-api-key',
@@ -125,30 +115,9 @@ export class WebDocumentDataManager {
       }
     ];
 
-    // 예제 코드를 문서 형태로 변환
-    const exampleDocs: DocumentData[] = NodejsExamplesLibrary.getExamples().map(example => ({
-      id: `example-${example.id}`,
-      title: `[예제] ${example.title}`,
-      content: `${example.description}\n\n사용법: ${example.usage}\n\n코드 예제:\n\`\`\`javascript\n${example.code}\n\`\`\``,
-      url: example.url,
-      category: 'example',
-      tags: [...example.keywords, '예제', '코드', 'sample', 'example', example.category.toLowerCase()],
-      metadata: {
-        type: 'example',
-        category: example.category,
-        exampleId: example.id,
-        keywords: [...example.keywords, '예제', '코드', 'sample', 'example', example.category.toLowerCase()]
-      }
-    }));
-
-    return [...basicDocs, ...exampleDocs];
+    return basicDocs;
   }
 
-  /**
-   * 문서 데이터 검증
-   * @param documents - 검증할 문서 배열
-   * @returns 검증 결과
-   */
   static validateDocuments(documents: DocumentData[]): boolean {
     if (!Array.isArray(documents)) return false;
 

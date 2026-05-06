@@ -14,6 +14,10 @@ const V1_CATEGORY_FIX: Record<string, string> = {
   storage: 'storage',
 };
 
+const V2_CATEGORY_FIX: Record<string, string> = {
+  storages: 'storage',
+};
+
 export const goAdapter: SdkAdapter = {
   sdk: 'go',
   repo: { owner: 'solapi', name: 'solapi-go' },
@@ -31,7 +35,8 @@ export const goAdapter: SdkAdapter = {
         const rel = entry.path.slice(V2_PREFIX.length);
         const segments = rel.split('/');
         if (segments.length < 2) continue;
-        const category = segments[0]!;
+        const rawCategory = segments[0]!;
+        const category = V2_CATEGORY_FIX[rawCategory] ?? rawCategory;
         const featureDir = segments[segments.length - 2]!;
         const fallback = `${category}-${featureDir}`;
 
