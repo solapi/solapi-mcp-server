@@ -29,6 +29,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
+    "sync": "node --loader ts-node/esm --no-warnings tools/sync-examples.ts",
     "dev": "ts-node --esm src/index.ts",
     "dev:watch": "nodemon --exec ts-node --esm src/index.ts",
     "test": "node test/test-server.js",
