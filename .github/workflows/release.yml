@@ -25,6 +25,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Verify npm version (OIDC trusted publishing needs >= 11.5.1)
         run: npm --version
