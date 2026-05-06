@@ -25,7 +25,9 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
+          # registry-url is intentionally omitted: setup-node injects
+          # //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN} into .npmrc,
+          # which blocks npm's OIDC trusted-publishing auto-activation.
 
       - name: Verify npm version (OIDC trusted publishing needs >= 11.5.1)
         run: npm --version
