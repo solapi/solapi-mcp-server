@@ -27,7 +27,10 @@ jobs:
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Verify npm version (OIDC trusted publishing needs >= 11.5.1)
+      - name: Upgrade npm for OIDC trusted publishing (>= 11.5.1)
+        run: npm install -g npm@latest
+
+      - name: Verify npm version
         run: npm --version
 
       - name: Install dependencies
