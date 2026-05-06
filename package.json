@@ -18,6 +18,14 @@
   "bin": {
     "solapi-mcp-server": "./dist/bin/mcp-runner.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/solapi/solapi-mcp-server.git"
+  },
+  "homepage": "https://github.com/solapi/solapi-mcp-server#readme",
+  "bugs": {
+    "url": "https://github.com/solapi/solapi-mcp-server/issues"
+  },
   "files": [
     "dist/**/*",
     "README.md"
