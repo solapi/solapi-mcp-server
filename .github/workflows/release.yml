@@ -21,13 +21,11 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: 'npm'
-          # registry-url is intentionally omitted: setup-node injects
-          # //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN} into .npmrc,
-          # which blocks npm's OIDC trusted-publishing auto-activation.
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Verify npm version (OIDC trusted publishing needs >= 11.5.1)
         run: npm --version

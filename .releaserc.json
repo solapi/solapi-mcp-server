@@ -42,7 +42,7 @@
       "npmPublish": false
     }],
     ["@semantic-release/exec", {
-      "publishCmd": "npm publish --provenance --access public"
+      "publishCmd": "npm publish --provenance --access public --loglevel=verbose"
     }],
     ["@semantic-release/git", {
       "assets": ["package.json", "CHANGELOG.md"],
